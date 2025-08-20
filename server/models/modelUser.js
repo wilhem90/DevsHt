@@ -52,13 +52,12 @@ const modelUser = {
   //   Para autualizar
 
   updateUser: async (idUser, data) => {
-    try {
-        if (!idUser || (typeof data !== "object") || Object.keys(data).length === 0 ) {
-            throw new Error("Não esta autorizado!")
-        }
-    } catch (error) {
-        throw new Error(error.message)
-    }
+    await connetion_db
+      .collection("users")
+      .doc(idUser)
+      .update({
+        ...data,
+      });
   },
 
   getUser: async (path, value) => {

@@ -68,15 +68,13 @@ const authUser = {
         accountNumber: user.accountNumber,
       };
 
-    //   Guarda o deviceId do usuario
-      if ((user.lastLogins).length < 4) {
-        await modelUser.updateUser(user.idUser, {
-          emailVerified: Boolean(true),
-          lastLogins: FieldValue.arrayUnion(),
-        });
-      } else {
-        throw new Error("Você deve remover alguns aparelho para continuar a conexão!")
-      }
+      //   Guarda o deviceId do usuario
+      const device = user.lastLogins.length > 4 ? [deviceId] : deviceId;
+      await modelUser.updateUser(user.idUser, {
+        emailVerified: Boolean(true),
+        lastLogins: FieldValue.arrayUnion(device),
+      });
+
       // Criar JWT válido por 1h
       const access_token = jwt.sign(payload, process.env.API_KEY_TOKEN, {
         expiresIn: "1h",
