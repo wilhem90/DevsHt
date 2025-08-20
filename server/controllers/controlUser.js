@@ -1,5 +1,6 @@
 const modelUser = require("../models/modelUser.js");
 const bcrypt = require("bcrypt");
+const { checkParams } = require("../validators/validateDataUser.js");
 
 const controlUser = {
   // Criamos o usuario com unique email
@@ -68,7 +69,7 @@ const controlUser = {
         soldeAccount: parseFloat("0.00"),
         userAcitve: Boolean(false),
         cpfUser: cpfUser.replace(/[. -]/g, ""),
-        lastLogins: {}
+        lastLogins: []
       };
 
 
@@ -95,38 +96,25 @@ const controlUser = {
     }
   },
 
-  // Buscamos todos os usuarios
-  getAllUsers: async (req, res) => {
-    const data = modelUser.getUsers();
+  // Buscamos o usuario com: emailUser || accountNumber || cpfUser
+  getUser: async (req, res) => {
+    const { path, value } = checkParams(req.body)
+    const userData = await modelUser.getUser(path, value);
+    if (userData?.data) {
+      userData.data.passwordUser = ""
+    }
     return res.status(200).json({
       success: true,
-      data,
+      data: userData?.data,
     });
   },
 
-  // Buscamos o usuario com: emailUser || accountNumber || cpfUser
-  getUser: async (req, res) => {
-    const { emailUser, accountNumber, cpfUser } = req.params;
-
-    if (!emailUser && !accountNumber && !cpfUser) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Deve informar o: emailUser ou accountNumber ou cpfUser valido!",
-      });
-    }
-    const path = emailUser
-      ? "emailUser"
-      : accountNumber
-      ? "accountNumber"
-      : "cpfUser";
-    const value = req.params[path];
-    console.log(path, value);
-
-    const userData = await modelUser.getUser(path, value);
+    // Buscamos todos os usuarios
+  getAllUsers: async (req, res) => {
+    const data = await modelUser.getUsers();
     return res.status(200).json({
       success: true,
-      data: userData || [],
+      data: data.data,
     });
   },
 };

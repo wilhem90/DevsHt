@@ -16,7 +16,8 @@ const modelUser = {
         .collection("users")
         .where("accountNumber", "==", accountNumber)
         .get();
-        const isExistAccountNumber = refAccount?.docs;
+
+      const isExistAccountNumber = refAccount?.docs;
 
       if (isExistAccountNumber.length > 0) {
         return {
@@ -24,6 +25,7 @@ const modelUser = {
           message: "Tente novamente!",
         };
       }
+
       const refNewUser = await connetion_db.collection("users").add({
         ...newUser,
         accountNumber: String(accountNumber),
@@ -47,11 +49,16 @@ const modelUser = {
     }
   },
 
-  getUsers: () => {
-    return {
-      success: true,
-      data: [],
-    };
+  //   Para autualizar
+
+  updateUser: async (idUser, data) => {
+    try {
+        if (!idUser || (typeof data !== "object") || Object.keys(data).length === 0 ) {
+            throw new Error("Não esta autorizado!")
+        }
+    } catch (error) {
+        throw new Error(error.message)
+    }
   },
 
   getUser: async (path, value) => {
@@ -61,10 +68,10 @@ const modelUser = {
         .where(path, "==", value)
         .get();
 
-
       return {
         success: true,
-        data: users?.docs[0]?.data() ? [users?.docs[0]?.data()] : [],
+        idUser: users.docs[0].id,
+        ...(users?.docs[0]?.data() || []),
       };
     } catch (error) {
       console.log("Error localizado na funccao modelUser.getUser");
@@ -72,6 +79,24 @@ const modelUser = {
         success: false,
         message: error.message,
       };
+    }
+  },
+
+  getUsers: async () => {
+    try {
+      const refUsers = await connetion_db.collection("users").get();
+
+      const users = refUsers.docs.map((user) => user.data());
+      return {
+        success: true,
+        data: users,
+      };
+    } catch (error) {
+      console.log("Error esta no controlUser.getUsers", error.message);
+      return resizeBy.status(500).json({
+        success: false,
+        message: "Tente novamente!",
+      });
     }
   },
 };
