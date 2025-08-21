@@ -1,4 +1,5 @@
 function checkParams(data) {
+  console.log(data);
   const { emailUser, accountNumber, cpfUser } = data;
 
   if (!emailUser && !accountNumber && !cpfUser) {

@@ -7,8 +7,15 @@ const controlUser = {
   createNewUser: async (req, res) => {
     try {
       const dataReceived = req.body || {};
-      const { cpfUser, firstNameUser, phoneNumber, lastNameUser, emailUser, countryUser, passwordUser } =
-        dataReceived;
+      const {
+        cpfUser,
+        firstNameUser,
+        phoneNumber,
+        lastNameUser,
+        emailUser,
+        countryUser,
+        passwordUser,
+      } = dataReceived;
       if (!emailUser || !cpfUser) {
         return res.status(400).json({
           success: false,
@@ -17,15 +24,17 @@ const controlUser = {
       }
 
       const isExistUser =
-        (await modelUser.getUser("emailUser", emailUser.toLowerCase()))?.data.length + (await modelUser.getUser("cpfUser", cpfUser.replace(/[. -]/g, "")))?.data.length
+        (await modelUser.getUser("emailUser", emailUser.toLowerCase()))?.data
+          .length +
+        (await modelUser.getUser("cpfUser", cpfUser.replace(/[. -]/g, "")))
+          ?.data.length;
 
-
-        console.log(isExistUser);
+      console.log(isExistUser);
 
       if (isExistUser > 0) {
         return res.status(400).json({
           success: false,
-          message: "Usuario já existiu no sistema!",
+          message: "Usuario já existiu no sistema!"
         });
       }
       const datosRequired = [
@@ -69,11 +78,9 @@ const controlUser = {
         soldeAccount: parseFloat("0.00"),
         userAcitve: Boolean(false),
         cpfUser: cpfUser.replace(/[. -]/g, ""),
-        lastLogins: []
+        lastLogins: [],
+        adminOfUsers: [],
       };
-
-
-      console.log(newUserData);
 
       const refUserCreated = await modelUser.createUser({
         ...newUserData,
@@ -98,24 +105,46 @@ const controlUser = {
 
   // Buscamos o usuario com: emailUser || accountNumber || cpfUser
   getUser: async (req, res) => {
-    const { path, value } = checkParams(req.body)
+    const { path, value } = checkParams(req.query);
     const userData = await modelUser.getUser(path, value);
-    if (userData?.data) {
-      userData.data.passwordUser = ""
+    if (userData?.idUser) {
+      userData.passwordUser = "";
     }
     return res.status(200).json({
       success: true,
-      data: userData?.data,
+      user: userData.message? []: userData,
     });
   },
 
-    // Buscamos todos os usuarios
+  // Buscamos todos os usuarios
   getAllUsers: async (req, res) => {
-    const data = await modelUser.getUsers();
-    return res.status(200).json({
-      success: true,
-      data: data.data,
-    });
+    try {
+      const emails = req.query.emailUser
+
+      const permitidos = [];
+
+      await Promise.all(
+        emails.map(async (email) => {
+          if (req.user?.adminOfUsers?.includes(email)) {
+            const data = await modelUser.getUser("emailUser", email);
+            if (data.idUser) {
+              permitidos.push({ ...data, passwordUser: "" });
+            }
+          }
+        })
+      );
+
+      return res.status(200).json({
+        success: true,
+        users: permitidos || [],
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
   },
+
 };
 module.exports = controlUser;

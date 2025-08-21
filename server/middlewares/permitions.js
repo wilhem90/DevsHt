@@ -3,7 +3,6 @@ const permitions = {
         if (data.roleUser === "admin") {
             throw new Error("Não esta autorizado!")
         }
-        console.log(data.roleUser);
         return
     }
 }

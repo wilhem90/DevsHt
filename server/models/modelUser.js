@@ -60,42 +60,32 @@ const modelUser = {
       });
   },
 
-  getUser: async (path, value) => {
+  getUser: async (field, value) => {
     try {
-      const users = await connetion_db
+      const snapshot = await connetion_db
         .collection("users")
-        .where(path, "==", value)
+        .where(field, "==", value)
         .get();
 
+      if (snapshot.empty) {
+        return {
+          success: false,
+          message: `Nenhum usuário encontrado!`,
+        };
+      }
+
+      const doc = snapshot.docs[0];
+
       return {
-        success: true,
-        idUser: users.docs[0].id,
-        ...(users?.docs[0]?.data() || []),
+        idUser: doc.id,
+        ...doc.data(),
       };
     } catch (error) {
-      console.log("Error localizado na funccao modelUser.getUser");
+      console.error("Erro localizado na função modelUser.getUser:", error);
       return {
         success: false,
         message: error.message,
       };
-    }
-  },
-
-  getUsers: async () => {
-    try {
-      const refUsers = await connetion_db.collection("users").get();
-
-      const users = refUsers.docs.map((user) => user.data());
-      return {
-        success: true,
-        data: users,
-      };
-    } catch (error) {
-      console.log("Error esta no controlUser.getUsers", error.message);
-      return resizeBy.status(500).json({
-        success: false,
-        message: "Tente novamente!",
-      });
     }
   },
 };

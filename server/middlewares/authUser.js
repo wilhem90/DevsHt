@@ -48,8 +48,6 @@ const authUser = {
         });
       }
 
-      console.log(user);
-
       const tokenRef = Date.now();
 
       // Payload
@@ -107,16 +105,21 @@ const authUser = {
   userIsAuthentic: async (req, res, next) => {
     try {
       const token = req.headers.authorization.split(" ")[1];
-      console.log(token);
       if (!token) {
         return res.status(400).json({
           success: true,
           message: "Voce não esta autorizado!",
         });
       }
+
       const user = jwt.verify(token, process.env.API_KEY_TOKEN);
-      console.log(user);
-      permitions.isAdminUser(user);
+      const userInfo = await modelUser.getUser("emailUser", user?.emailUser);
+      if (!userInfo.idUser) {
+        throw new Error("Não esta autorizado!")
+      }
+      req.user = userInfo;
+      permitions.isAdminUser(userInfo);
+
       next();
     } catch (error) {
       console.log(error.message);
