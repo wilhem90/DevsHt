@@ -1,4 +1,4 @@
-const { connetion_db, Timestamp } = require("../db/connection");
+const { connetion_db, Timestamp, FieldValue } = require("../db/connection");
 
 const modelUser = {
   // Criando usuario
@@ -50,22 +50,35 @@ const modelUser = {
   },
 
   //   Para autualizar
-
   updateUser: async (idUser, data) => {
-    await connetion_db
-      .collection("users")
-      .doc(idUser)
-      .update({
-        ...data,
-      });
+    try {
+      if (!idUser) throw new Error("ID do usuário é obrigatório.");
+
+      const updateData = { ...data, updateAt: Timestamp.fromDate(new Date()) };
+
+      await connetion_db
+        .collection("users")
+        .doc(idUser)
+        .update(updateData);
+      return {
+        success: true,
+        message: "Atualizada com sucesso!",
+      };
+    } catch (error) {
+      console.error("Erro em modelUser.updateUser:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
   },
 
-  getUser: async (field, value) => {
+  // Buscar usuarios
+  getUser: async (fieldPath, value) => {
     try {
-      const snapshot = await connetion_db
-        .collection("users")
-        .where(field, "==", value)
-        .get();
+      let query = connetion_db.collection("users");
+      query = query.where(fieldPath, "==", value)
+      const snapshot = await query.get();
 
       if (snapshot.empty) {
         return {
@@ -77,6 +90,7 @@ const modelUser = {
       const doc = snapshot.docs[0];
 
       return {
+        success: true,
         idUser: doc.id,
         ...doc.data(),
       };
@@ -87,6 +101,39 @@ const modelUser = {
         message: error.message,
       };
     }
+  },
+
+  deleteUser: async (emailUser) => {
+    const userRef = connetion_db
+      .collection("users")
+      .where("emailUser", "==", emailUser);
+    const users = await userRef.get();
+    const id = users.docs[0]?.id;
+    if (!id) {
+      return {
+        success: true,
+        message: "Conta não existe!",
+      };
+    }
+
+    await connetion_db.collection("users").doc(id).delete();
+    return {
+      success: true,
+      message: "Conta deletada com successo!",
+    };
+  },
+
+  // Vamos guardar o extracto
+  saveExtract: async (data) => {
+    const extractDoc = connetion_db.collection("extracts").doc();
+    const extractRef = await extractDoc.create({
+      ...data,
+      createdAt: Timestamp.fromDate(new Date()),
+    });
+    return {
+      success: true,
+      idExtract: extractRef.id,
+    };
   },
 };
 

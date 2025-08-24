@@ -1,26 +1,26 @@
 const jwt = require("jsonwebtoken");
 const modelUser = require("../models/modelUser");
-const { checkParams } = require("../validators/validateDataUser");
+const { checkParams } = require("../validators/validateData");
 const bcrypt = require("bcrypt");
-const permitions = require("./permitions");
-const { FieldValue } = require("firebase-admin/firestore");
 require("dotenv").config();
 
 const authUser = {
   createLogin: async (req, res) => {
     try {
-      const { passwordUser, deviceId } = req.body;
+      // Pegar IP
+      const ipUser = req.ip || req.connection.remoteAddress;
+      let { passwordUser, deviceId, deviceName } = req.body;
       const { path, value } = checkParams(req.body);
 
-      if (!passwordUser || !path || !value || !deviceId) {
+      if ((!passwordUser && !deviceId) || !path || !value) {
         return res.status(400).json({
           success: false,
-          message: "Verifique seus dados e tente novamente!",
+          message: "Verifique seus dados e tente novamente!"
         });
       }
 
       const user = await modelUser.getUser(path, value);
-      if (!user?.success) {
+      if (user?.idUser === "") {
         return res.status(404).json({
           success: false,
           message: "Usuário não encontrado!",
@@ -28,19 +28,26 @@ const authUser = {
       }
 
       // Comparar senha
-      const isMatch = bcrypt.compareSync(passwordUser, user.passwordUser);
-      if (!isMatch) {
+      const isMatch = passwordUser
+        ? bcrypt.compareSync(passwordUser, user.passwordUser)
+        : false;
+
+      const isContains = user?.lastLogins?.[deviceId] ? true : false;
+
+      if (!passwordUser && !isContains) {
         return res.status(401).json({
+          success: false,
+          message: "Algo deu errado!",
+        });
+      }
+
+      if (passwordUser && !isMatch) {
+        return res.status(400).json({
           success: false,
           message: "Senha incorreta!",
         });
       }
 
-      // Pegar IP
-      const ipUser =
-        req.ip ||
-        req.headers["x-forwarded-for"] ||
-        req.connection.remoteAddress;
       if (!ipUser) {
         return res.status(400).json({
           success: false,
@@ -48,7 +55,7 @@ const authUser = {
         });
       }
 
-      const tokenRef = Date.now();
+      deviceId = deviceId ? deviceId : Date.now();
 
       // Payload
       const payload = {
@@ -62,15 +69,24 @@ const authUser = {
         userAcitve: user.userAcitve,
         cpfUser: user.cpfUser,
         ipUser,
-        tokenRef,
+        deviceId,
+        deviceName: deviceName || req.headers["user-agent"],
         accountNumber: user.accountNumber,
       };
 
       //   Guarda o deviceId do usuario
-      const device = user.lastLogins.length > 4 ? [deviceId] : deviceId;
       await modelUser.updateUser(user.idUser, {
         emailVerified: Boolean(true),
-        lastLogins: FieldValue.arrayUnion(device),
+        lastLogins: {
+          ...user.lastLogins,
+          [deviceId]: {
+            ipUser,
+            deviceName: deviceName || req.headers["user-agent"],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            active: Boolean(false),
+          },
+        },
       });
 
       // Criar JWT válido por 1h
@@ -89,9 +105,10 @@ const authUser = {
           roleUser: user.roleUser,
           accountNumber: user.accountNumber,
         },
+        expiresIn: new Date().setMinutes(59),
       });
     } catch (error) {
-      console.log(error.message);
+      console.log(error);
       return res
         .status(["Não esta autorizado!"].includes(error.message) ? 401 : 500)
         .json({
@@ -104,28 +121,49 @@ const authUser = {
   //   Check user is authorized
   userIsAuthentic: async (req, res, next) => {
     try {
-      const token = req.headers.authorization.split(" ")[1];
-      if (!token) {
-        return res.status(400).json({
-          success: true,
-          message: "Voce não esta autorizado!",
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({
+          success: false,
+          message: "Token de autenticação não fornecido!",
         });
       }
 
-      const user = jwt.verify(token, process.env.API_KEY_TOKEN);
-      const userInfo = await modelUser.getUser("emailUser", user?.emailUser);
-      if (!userInfo.idUser) {
-        throw new Error("Não esta autorizado!")
+      const token = authHeader.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: "Token inválido!",
+        });
       }
-      req.user = userInfo;
-      permitions.isAdminUser(userInfo);
 
+      if (
+        req.method === "POST" &&
+        (!req.body || Object.keys(req.body).length === 0)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Nenhum dado foi enviado.",
+        });
+      }
+
+      const userDecoded = jwt.verify(token, process.env.API_KEY_TOKEN);
+
+      const userInfo = await modelUser.getUser(
+        "emailUser",
+        userDecoded?.emailUser
+      );
+      if (!userInfo?.idUser || !userInfo?.userAcitve) {
+        throw new Error("Não está autorizado!");
+      }
+
+      req.user = userInfo;
       next();
     } catch (error) {
-      console.log(error.message);
+      console.log("userIsAuthentic:", error.message);
       return res
         .status(
-          ["Não esta autorizado!", "invalid signature", "jwt expired"].includes(
+          ["Não está autorizado!", "invalid signature", "jwt expired"].includes(
             error.message
           )
             ? 401

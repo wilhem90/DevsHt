@@ -1,6 +1,6 @@
 const permitions = {
     isAdminUser: (data) => {
-        if (data.roleUser === "admin") {
+        if (!["admin", "manager"].includes(data.roleUser)) {
             throw new Error("Não esta autorizado!")
         }
         return

@@ -1,6 +1,5 @@
 function checkParams(data) {
-  console.log(data);
-  const { emailUser, accountNumber, cpfUser } = data;
+  const { emailUser, accountNumber, cpfUser, role } = data;
 
   if (!emailUser && !accountNumber && !cpfUser) {
     return res.status(400).json({
@@ -8,6 +7,7 @@ function checkParams(data) {
       message: "Deve informar o: emailUser ou accountNumber ou cpfUser valido!",
     });
   }
+  
   const path = emailUser
     ? "emailUser"
     : accountNumber
@@ -18,4 +18,4 @@ function checkParams(data) {
   return { path, value };
 }
 
-module.exports = { checkParams }
+module.exports = { checkParams };
