@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const authUser = {
   // criar login
-   createLogin: async (req, res) => {
+  createLogin: async (req, res) => {
     try {
       const ipUser = req.ip || req.connection.remoteAddress;
       let { passwordUser, deviceId } = req.body;
@@ -38,7 +38,7 @@ const authUser = {
 
       // Comparar senha
       const isMatch = passwordUser
-        ? await bcrypt.compare(passwordUser, user.passwordUser)
+        ? bcrypt.compareSync(passwordUser, user.passwordUser)
         : false;
 
       if (!isMatch) {
@@ -68,7 +68,7 @@ const authUser = {
               deviceName,
               createdAt: new Date(),
               updatedAt: new Date(),
-              active: false, // 🔒 Sempre começa inativo
+              active: false,
             },
           },
         });
@@ -144,19 +144,26 @@ const authUser = {
   // Middleware: checa se usuário está autenticado
   userIsAuthentic: async (req, res, next) => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
+      const { authorization, deviceid } = req.headers;
+      if (!authorization) {
         return res.status(401).json({
           success: false,
           message: "Token de autenticação não fornecido!",
         });
       }
 
-      const token = authHeader.split(" ")[1];
+      const token = authorization.split(" ")[1];
       if (!token) {
         return res.status(401).json({
           success: false,
           message: "Token inválido!",
+        });
+      }
+
+      if (!deviceid) {
+        return res.status(400).json({
+          success: false,
+          message: "Precisa enviar o deviceId!",
         });
       }
 
@@ -169,8 +176,22 @@ const authUser = {
         userDecoded?.emailUser
       );
 
+      const existingDevice = userInfo?.lastLogins?.[deviceid];
+
+      // Se device existe mas está inativo → bloqueia também
+      if (!existingDevice?.active) {
+        return res.status(403).json({
+          success: false,
+          message: "Este dispositivo ainda não foi ativado.",
+          deviceid,
+        });
+      }
+
       if (!userInfo?.idUser || !userInfo?.userAcitve) {
-        throw new Error("Não está autorizado!");
+        return res.status(401).json({
+          success: false,
+          message: "Não está autorizado!",
+        });
       }
 
       // Injeta usuário no req

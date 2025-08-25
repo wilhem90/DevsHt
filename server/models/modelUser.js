@@ -1,4 +1,4 @@
-const { connetion_db, Timestamp, FieldValue } = require("../db/connection");
+const { connetion_db, Timestamp } = require("../db/connection");
 
 const modelUser = {
   // Criando usuario
@@ -56,10 +56,7 @@ const modelUser = {
 
       const updateData = { ...data, updateAt: Timestamp.fromDate(new Date()) };
 
-      await connetion_db
-        .collection("users")
-        .doc(idUser)
-        .update(updateData);
+      await connetion_db.collection("users").doc(idUser).update(updateData);
       return {
         success: true,
         message: "Atualizada com sucesso!",
@@ -77,7 +74,7 @@ const modelUser = {
   getUser: async (fieldPath, value) => {
     try {
       let query = connetion_db.collection("users");
-      query = query.where(fieldPath, "==", value)
+      query = query.where(fieldPath, "==", value);
       const snapshot = await query.get();
 
       if (snapshot.empty) {
@@ -88,6 +85,7 @@ const modelUser = {
       }
 
       const doc = snapshot.docs[0];
+      let queryTransactionUser = connetion_db.collectionGroup("extracts").where(fieldPath, "==", value)
 
       return {
         success: true,
@@ -124,16 +122,32 @@ const modelUser = {
   },
 
   // Vamos guardar o extracto
-  saveExtract: async (data) => {
-    const extractDoc = connetion_db.collection("extracts").doc();
-    const extractRef = await extractDoc.create({
-      ...data,
-      createdAt: Timestamp.fromDate(new Date()),
-    });
-    return {
-      success: true,
-      idExtract: extractRef.id,
-    };
+  saveExtract: async (data, refDoc) => {
+    try {
+      const extractCollection = connetion_db.collection("extracts");
+
+      // Se veio refDoc, usa como ID fixo. Se não, gera automático
+      const extractDoc = refDoc
+        ? extractCollection.doc(refDoc)
+        : extractCollection.doc();
+
+      await extractDoc.set({
+        ...data,
+        createdAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+
+      return {
+        success: true,
+        idExtract: extractDoc.id,
+      };
+    } catch (error) {
+      console.error("Erro ao salvar extract:", error);
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
   },
 };
 

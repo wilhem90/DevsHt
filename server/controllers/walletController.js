@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 
 const walletController = {
   //    Adicionar saldo para um usuário Somente manager pode adicionar
-  addFunds: async (req, res) => {
+  addOrRemovefunds: async (req, res) => {
     try {
       const { accountNumber, amount, action, pinTransaction } = req.body;
       const emailUser = req.user.emailUser;
@@ -26,10 +26,10 @@ const walletController = {
         });
       }
 
-      if (!["add", "remove"].includes(action)) {
+      if (!["add", "remove", "confirm-deposit"].includes(action)) {
         return res.status(400).json({
           success: false,
-          message: "Ação inválida. Use 'add' ou 'remove'.",
+          message: "Ação inválida. Use 'add', 'confirm-deposit' ou 'remove'.",
         });
       }
 
@@ -51,31 +51,58 @@ const walletController = {
       }
       const idUser = targetUser.idUser;
       const LastSolde = targetUser.soldeAccount || 0;
-      let NewSolde = LastSolde;
-      if (action === "add") {
-        NewSolde = LastSolde + amount;
-      } else if (action === "remove") {
-        NewSolde = LastSolde - amount;
+      const NewSolde =
+        action === "remove"
+          ? LastSolde - amount
+          : action === "add"
+          ? LastSolde + amount
+          : action === "confirm-deposit"
+          ? LastSolde + amount
+          : LastSolde;
+
+      if (action === "confirm-deposit") {
+        const { refDposit } = req.body;
+        if (refDposit === undefined || !refDposit) {
+          return res.status(400).json({
+            success: false,
+            message: "Deve enviar a referencia do deposito!",
+          });
+        }
       }
 
-      const ispinTransactionMatch = bcrypt.compare(
+      console.log("Chegamos por aqui");
+      if (!pinTransaction) {
+        return res.status(400).json({
+          success: false,
+          message: "Deve informar o seu pin para finalizar a transação.",
+        });
+      }
+
+      const ispinTransactionMatch = bcrypt.compareSync(
         pinTransaction,
         userLogged.pinTransaction
       );
-      if (!pinTransaction || !ispinTransactionMatch) {
-        throw new Error("Pin transação não valido.");
+
+      if (!ispinTransactionMatch) {
+        return res.status(400).json({
+          success: false,
+          message: "Pin transação não valido.",
+        });
       }
 
       await modelUser.updateUser(idUser, { soldeAccount: NewSolde });
-      await modelUser.saveExtract({
-        ToUser: targetUser.emailUser,
-        TypeTransaction: action,
-        Status: "completed",
-        Amount: amount,
-        LastSolde,
-        NewSolde,
-        CreatedBy: emailUser,
-      });
+      await modelUser.saveExtract(
+        {
+          ToUser: targetUser.emailUser,
+          TypeTransaction: action,
+          Status: "completed",
+          Amount: amount,
+          LastSolde,
+          NewSolde,
+          CreatedBy: emailUser,
+        },
+        refDposit
+      );
 
       const message =
         action === "add"
@@ -95,6 +122,56 @@ const walletController = {
       return res.status(500).json({
         success: false,
         message: "Erro interno.",
+      });
+    }
+  },
+
+  // Depositar valor na sua conta
+  depositToMyAccount: async (req, res) => {
+    try {
+      const { amount, method } = req.body;
+      const userInfo = req.user; // precisa estar no token
+
+      // Valida método de pagamento
+      if (!method || !["PIX"].includes(method)) {
+        return res.status(400).json({
+          success: false,
+          message: "Deve enviar um método válido. Ex: PIX",
+        });
+      }
+
+      // Valida valor
+      if (!amount || amount < 5) {
+        return res.status(400).json({
+          success: false,
+          message: "Valor mínimo para depósito é R$5,00.",
+        });
+      }
+
+      // Cria o registro no extrato
+      const depositRef = await modelUser.saveExtract({
+        createdBy: userInfo.emailUser,
+        cpfUser: userInfo.cpfUser,
+        phoneUser: userInfo.phoneNumber,
+        fullName: `${userInfo.firstNameUser} ${userInfo.lastNameUser}`,
+        amount,
+        method,
+        type: "deposit",
+        status: "pending", // aguardando confirmação
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Depósito criado com sucesso! Aguarde confirmação.",
+        depositId: depositRef.id, // se quiser retornar
+      });
+    } catch (error) {
+      console.error("depositToMyAccount:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Alguma coisa deu errado, tente mais tarde.",
       });
     }
   },
