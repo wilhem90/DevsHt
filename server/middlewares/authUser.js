@@ -5,7 +5,8 @@ const bcrypt = require("bcrypt");
 require("dotenv").config();
 
 const authUser = {
-  createLogin: async (req, res) => {
+  // criar login
+   createLogin: async (req, res) => {
     try {
       const ipUser = req.ip || req.connection.remoteAddress;
       let { passwordUser, deviceId } = req.body;
@@ -40,22 +41,7 @@ const authUser = {
         ? await bcrypt.compare(passwordUser, user.passwordUser)
         : false;
 
-      // Checar se device já é conhecido
-      const existingDevice = user?.lastLogins?.[deviceId];
-      const isKnownDevice =
-        existingDevice?.active &&
-        existingDevice?.deviceName === deviceName;
-
-      // Se não enviou senha e não for device conhecido → bloqueia
-      if (!passwordUser && !isKnownDevice) {
-        return res.status(401).json({
-          success: false,
-          message: "Credenciais inválidas!",
-        });
-      }
-
-      // Se enviou senha mas ela não confere
-      if (passwordUser && !isMatch) {
+      if (!isMatch) {
         return res.status(400).json({
           success: false,
           message: "Senha incorreta!",
@@ -69,35 +55,43 @@ const authUser = {
         });
       }
 
-      // Se o device já existe → mantém ativo se senha confere
-      // Se for novo device → marca como inactive
-      const deviceData = {
-        ipUser,
-        deviceName,
-        createdAt: existingDevice?.createdAt || new Date(),
-        updatedAt: new Date(),
-        active: existingDevice ? (isMatch ? true : existingDevice.active) : false,
-      };
+      // Checar se device já é conhecido
+      const existingDevice = user?.lastLogins?.[deviceId];
 
-      // Atualiza dados do usuário
-      await modelUser.updateUser(user.idUser, {
-        emailVerified: true,
-        lastLogins: {
-          ...user.lastLogins,
-          [deviceId]: deviceData,
-        },
-      });
+      // Se device ainda não existe → criar como inativo
+      if (!existingDevice) {
+        await modelUser.updateUser(user.idUser, {
+          lastLogins: {
+            ...user.lastLogins,
+            [deviceId]: {
+              ipUser,
+              deviceName,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              active: false, // 🔒 Sempre começa inativo
+            },
+          },
+        });
 
-      // Se device ainda está inativo → não gera token
-      if (!deviceData.active) {
         return res.status(403).json({
           success: false,
-          message: "Novo dispositivo detectado. Ative este dispositivo para continuar.",
+          message:
+            "Novo dispositivo detectado. É necessário ativá-lo antes de continuar.",
           deviceId,
         });
       }
 
-      // Payload do JWT
+      // Se device existe mas está inativo → bloqueia também
+      if (!existingDevice.active) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Este dispositivo ainda não foi ativado. Confirme o dispositivo para continuar.",
+          deviceId,
+        });
+      }
+
+      // Se device existe e está ativo → libera login
       const payload = {
         idUser: user.idUser,
         emailUser: user.emailUser,
@@ -107,10 +101,20 @@ const authUser = {
         deviceName,
       };
 
-      // Cria token válido por 1h
       const expiresInSeconds = 60 * 60;
       const access_token = jwt.sign(payload, process.env.API_KEY_TOKEN, {
         expiresIn: expiresInSeconds,
+      });
+
+      // Atualiza updatedAt no device ativo
+      await modelUser.updateUser(user.idUser, {
+        lastLogins: {
+          ...user.lastLogins,
+          [deviceId]: {
+            ...existingDevice,
+            updatedAt: new Date(),
+          },
+        },
       });
 
       return res.status(200).json({
@@ -130,6 +134,58 @@ const authUser = {
       console.error("createLogin:", error.message);
       return res
         .status(["Não está autorizado!"].includes(error.message) ? 401 : 500)
+        .json({
+          success: false,
+          message: error.message,
+        });
+    }
+  },
+
+  // Middleware: checa se usuário está autenticado
+  userIsAuthentic: async (req, res, next) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({
+          success: false,
+          message: "Token de autenticação não fornecido!",
+        });
+      }
+
+      const token = authHeader.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: "Token inválido!",
+        });
+      }
+
+      // Verifica JWT
+      const userDecoded = jwt.verify(token, process.env.API_KEY_TOKEN);
+
+      // Busca usuário pelo email do token
+      const userInfo = await modelUser.getUser(
+        "emailUser",
+        userDecoded?.emailUser
+      );
+
+      if (!userInfo?.idUser || !userInfo?.userAcitve) {
+        throw new Error("Não está autorizado!");
+      }
+
+      // Injeta usuário no req
+      req.user = userInfo;
+      next();
+    } catch (error) {
+      console.error("userIsAuthentic:", error.message);
+      return res
+        .status(
+          ["Não está autorizado!", "invalid signature", "jwt expired"].includes(
+            error.message
+          )
+            ? 401
+            : 500
+        )
         .json({
           success: false,
           message: error.message,
