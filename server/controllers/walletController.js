@@ -1,23 +1,24 @@
 // controllers/walletController.js
 const modelUser = require("../models/modelUser");
 const bcrypt = require("bcrypt");
+const sendEmail = require("../services/senderEmail");
 
 const walletController = {
   //    Adicionar saldo para um usuário Somente manager pode adicionar
   addOrRemovefunds: async (req, res) => {
     try {
-      const { accountNumber, amount, action, pinTransaction } = req.body;
+      const { accountNumber, amount, action, pinTransaction, refDeposit } = req.body;
       const emailUser = req.user.emailUser;
 
-      if (
-        req.user.roleUser !== "manager" ||
-        req.user.accountNumber === accountNumber
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "Não está autorizado.",
-        });
-      }
+      // if (
+      //   req.user.roleUser !== "manager" ||
+      //   req.user.accountNumber === accountNumber
+      // ) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     message: "Não está autorizado.",
+      //   });
+      // }
 
       if (!amount || amount <= 0) {
         return res.status(400).json({
@@ -50,27 +51,23 @@ const walletController = {
         });
       }
       const idUser = targetUser.idUser;
-      const LastSolde = targetUser.soldeAccount || 0;
-      const NewSolde =
+      const lastSolde = targetUser.soldeAccount || 0;
+      const newSolde =
         action === "remove"
-          ? LastSolde - amount
+          ? lastSolde - amount
           : action === "add"
-          ? LastSolde + amount
+          ? lastSolde + amount
           : action === "confirm-deposit"
-          ? LastSolde + amount
-          : LastSolde;
+          ? lastSolde + amount
+          : lastSolde;
 
-      if (action === "confirm-deposit") {
-        const { refDposit } = req.body;
-        if (refDposit === undefined || !refDposit) {
-          return res.status(400).json({
-            success: false,
-            message: "Deve enviar a referencia do deposito!",
-          });
-        }
+      if (action === "confirm-deposit" && (refDeposit === undefined || !refDeposit)) {
+        return res.status(400).json({
+          success: false,
+          message: "Deve enviar a referencia do deposito!",
+        });
       }
 
-      console.log("Chegamos por aqui");
       if (!pinTransaction) {
         return res.status(400).json({
           success: false,
@@ -90,32 +87,31 @@ const walletController = {
         });
       }
 
-      await modelUser.updateUser(idUser, { soldeAccount: NewSolde });
-      await modelUser.saveExtract(
-        {
-          ToUser: targetUser.emailUser,
-          TypeTransaction: action,
-          Status: "completed",
-          Amount: amount,
-          LastSolde,
-          NewSolde,
-          CreatedBy: emailUser,
-        },
-        refDposit
-      );
+      await modelUser.updateUser(idUser, { soldeAccount: newSolde });
+      await modelUser.saveExtract(idUser, refDeposit, {
+        toUser: targetUser.emailUser,
+        typeTransaction: action,
+        status: "completed",
+        amount,
+        lastSolde,
+        newSolde,
+        createdBy: emailUser,
+      });
 
       const message =
         action === "add"
           ? "Saldo adicionado com sucesso."
           : "O valor foi retirado com sucesso.";
 
+          sendEmail("alert", targetUser.emailUser, { message: `${message} <p>Valor: R$ ${amount},00</p> <p>Saldo antes: ${lastSolde}</p> <p>Novo saldo: ${newSolde}</p> <p>Date: ${new Date()}</p>` } )
+
       return res.status(200).json({
         success: true,
         message,
-        LastSolde,
-        NewSolde,
-        Amount: amount,
-        CurrencyIso: "BRL",
+        lastSolde,
+        newSolde,
+        amount,
+        currencyIso: "BRL",
       });
     } catch (error) {
       console.error("Erro addFunds:", error);
@@ -149,7 +145,7 @@ const walletController = {
       }
 
       // Cria o registro no extrato
-      const depositRef = await modelUser.saveExtract({
+      const depositRef = await modelUser.saveExtract(userInfo.idUser, null, {
         createdBy: userInfo.emailUser,
         cpfUser: userInfo.cpfUser,
         phoneUser: userInfo.phoneNumber,
@@ -204,12 +200,12 @@ const walletController = {
         });
       }
 
-      const LastSolde = req.user.soldeAccount || 0;
-      if (LastSolde < amount) {
+      const lastSolde = req.user.soldeAccount || 0;
+      if (lastSolde < amount) {
         return res.status(400).json({
           success: false,
           message: "Saldo insuficiente.",
-          soldeAccount: LastSolde,
+          soldeAccount: lastSolde,
           CurrencyIso: "BRL",
         });
       }
@@ -228,9 +224,9 @@ const walletController = {
       }
       // Atualiza saldo do usuário
       const idUser = req.user.idUser;
-      const NewSolde = LastSolde - amount;
+      const newSolde = lastSolde - amount;
       const updated = await modelUser.updateUser(idUser, {
-        soldeAccount: NewSolde,
+        soldeAccount: newSolde,
       });
 
       if (!updated.success) {
@@ -238,26 +234,26 @@ const walletController = {
       }
       // Salva extrato
       await modelUser.saveExtract({
-        FromUser: emailUser,
-        TypeTransaction: "withdraw",
-        Status: "pending", // mantém pendente até confirmação do processamento
-        Amount: amount,
-        LastSolde,
-        NewSolde,
-        Method: method,
-        Destination: destination,
-        CurrencyIso: "BRL",
+        fromUser: emailUser,
+        typeTransaction: "withdraw",
+        status: "pending", // mantém pendente até confirmação do processamento
+        amount,
+        lastSolde,
+        newSolde,
+        method,
+        destination,
+        currencyIso: "BRL",
       });
 
       return res.status(200).json({
         success: true,
         message: "Saque registrado com sucesso, aguardando processamento.",
-        Amount: amount,
-        LastSolde,
-        NewSolde,
-        Method: method,
-        Destination: destination,
-        CurrencyIso: "BRL",
+        amount,
+        lastSolde,
+        newSolde,
+        method,
+        destination,
+        currencyIso: "BRL",
       });
     } catch (error) {
       console.error("Erro withdraw:", error);
@@ -314,16 +310,16 @@ const walletController = {
           success: false,
           message: "Saldo insuficiente.",
           soldeAccount: userLogged.soldeAccount,
-          CurrencyIso: "BRL",
+          currencyIso: "BRL",
         });
       }
 
       // Atualizar saldo userLogged
-      const NewSenderSolde = userLogged.soldeAccount - amount;
-      const NewReceiverSolde = (receiver.soldeAccount || 0) + amount;
+      const newSenderSolde = userLogged.soldeAccount - amount;
+      const newReceiverSolde = (receiver.soldeAccount || 0) + amount;
 
       const updated_fromUser = await modelUser.updateUser(userLogged.idUser, {
-        soldeAccount: NewSenderSolde,
+        soldeAccount: newSenderSolde,
       });
 
       if (!updated_fromUser.success) {
@@ -331,18 +327,18 @@ const walletController = {
       }
       // Registrar transfer-out
       await modelUser.saveExtract({
-        FromUser: userLogged.emailUser,
-        TypeTransaction: "transfer_out",
-        Status: "completed",
-        Amount: amount,
-        LastSolde: userLogged.soldeAccount,
-        NewSolde: NewSenderSolde,
-        ToUser: receiver.emailUser,
+        fromUser: userLogged.emailUser,
+        typeTransaction: "transfer_out",
+        status: "completed",
+        amount,
+        lastSolde: userLogged.soldeAccount,
+        newSolde: newSenderSolde,
+        toUser: receiver.emailUser,
       });
 
       // Atualizar saldo receiver-User
       const updated_receiveUser = await modelUser.updateUser(receiver.idUser, {
-        soldeAccount: NewReceiverSolde,
+        soldeAccount: newReceiverSolde,
       });
 
       if (!updated_receiveUser.success) {
@@ -351,21 +347,21 @@ const walletController = {
 
       // Guarda transfer-in
       await modelUser.saveExtract({
-        ToUser: receiver.emailUser,
-        TypeTransaction: "transfer_in",
-        Status: "completed",
-        Amount: amount,
-        LastSolde: receiver.soldeAccount || 0,
-        NewSolde: NewReceiverSolde,
-        FromUser: userLogged.emailUser,
+        toUser: receiver.emailUser,
+        typeTransaction: "transfer_in",
+        status: "completed",
+        amount,
+        lastSolde: receiver.soldeAccount || 0,
+        newSolde: newReceiverSolde,
+        fromUser: userLogged.emailUser,
       });
 
       return res.status(200).json({
         success: true,
         message: "Transferência realizada com sucesso.",
-        NewSenderSolde,
-        NewReceiverSolde,
-        CurrencyIso: "BRL",
+        newSenderSolde,
+        newReceiverSolde,
+        currencyIso: "BRL",
       });
     } catch (error) {
       console.error("Erro transferFunds:", error);

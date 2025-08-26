@@ -25,10 +25,12 @@ const modelTopUp = {
   },
 
   //   Para autualizar
-  updateTopUp: async (idTopup, data) => {
+  updateTopUp: async (idUser, idTopup, data) => {
     try {
       if (!idTopup) throw new Error("ID do topup é obrigatório.");
       await connetion_db
+        .collection("users")
+        .doc(idUser)
         .collection("transactions")
         .doc(idTopup)
         .update({ ...data });
@@ -46,15 +48,19 @@ const modelTopUp = {
   },
 
   // Vamos guardar a transactions
-  saveTopUp: async (data) => {
-    const extractDoc = connetion_db.collection("transactions").doc();
-    await extractDoc.create({
+  saveTopUp: async (idUser, idTopUp, data) => {
+    const extractDoc = connetion_db
+      .collection("users")
+      .doc(idUser)
+      .collection("transactions")
+      .doc(idTopUp);
+    await extractDoc.set({
       ...data,
       createdAt: Timestamp.fromDate(new Date()),
     });
     return {
       success: true,
-      idTopup: extractDoc.id,
+      idTopUp,
     };
   },
 };

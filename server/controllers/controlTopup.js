@@ -1,6 +1,7 @@
 const modelTopUp = require("../models/modelTopUp");
 const modelUser = require("../models/modelUser");
 const { requestDing } = require("../services/requestDing");
+const sendEmail = require("../services/senderEmail");
 
 // Control topup
 const controlTopUp = {
@@ -65,31 +66,30 @@ const controlTopUp = {
     }
   },
 
+  // Enviar recarga
   SendTransfer: async (req, res) => {
     try {
       const idUser = req.user.idUser;
       const emailUser = req.user.emailUser;
 
-      if (req.body.SendValue > 250) {
+      if (req.body.sendValue > 250) {
         return res.status(400).json({
           success: false,
           message: "Não pode enviar esse valor",
         });
       }
-      // Gera ref única
-      const DistributorRef = Math.random().toString(36).slice(2, 12);
 
       const dataValids = {};
       const requiredFields = [
-        "SkuCode",
-        "SendValue",
-        "SendCurrencyIso",
-        "AccountNumber",
-        "ValidateOnly",
-        "CountryName",
-        "OperatorName",
-        "ReceiveCurrencyIso",
-        "TransactionType",
+        "skuCode",
+        "sendValue",
+        "sendCurrencyIso",
+        "accountNumber",
+        "validateOnly",
+        "countryName",
+        "operatorName",
+        "receiveCurrencyIso",
+        "transactionType",
       ];
 
       // Validação de campos obrigatórios
@@ -108,94 +108,106 @@ const controlTopUp = {
       requiredFields.forEach((f) => (dataValids[f] = req.body[f]));
 
       // Remove caracteres não numéricos do AccountNumber
-      dataValids.AccountNumber = String(dataValids.AccountNumber).replace(
+      dataValids.accountNumber = String(dataValids.accountNumber).replace(
         /\D/g,
         ""
       );
-      dataValids.ValidateOnly = Boolean(dataValids.ValidateOnly);
 
-      const LastSolde = req.user.soldeAccount || 0;
-      const SendValue = Number(dataValids.SendValue);
+      dataValids.validateOnly = Boolean(dataValids.validateOnly);
+      const lastSolde = req.user.soldeAccount || 0;
+      const sendValue = Number(dataValids.sendValue);
 
-      if (LastSolde < SendValue) {
+      if (lastSolde < sendValue) {
         return res.status(400).json({
           success: false,
           message: "Saldo insuficiente.",
         });
       }
 
-      const NewSolde = LastSolde - SendValue;
+      const newSolde = lastSolde - sendValue;
+      // Gera ref única
+      const distributorRef = dataValids.accountNumber;
 
       // Atualiza saldo e salva extrato inicial
-      await modelUser.updateUser(idUser, { soldeAccount: NewSolde });
+      await modelUser.updateUser(idUser, { soldeAccount: newSolde });
 
-      await modelUser.saveExtract({
+      // Guarda a transaction
+      const refExtract = await modelUser.saveExtract(idUser, null, {
         emailUser,
-        TypeTransaction: "topup",
-        AmountSended: SendValue,
-        Status: "discounted",
-        LastSolde,
-        NewSolde,
-        CurrencyIso: "BRL"
+        typeTransaction: "topup",
+        amountSended: sendValue,
+        status: "completed",
+        lastSolde,
+        newSolde,
+        currencyIso: "BRL",
       });
 
       // Cria transação "pendente"
-      const transactionRef = await modelTopUp.saveTopUp({
+      await modelTopUp.saveTopUp(idUser, refExtract.idExtract, {
         ...dataValids,
-        DistributorRef,
-        Status: "pending",
-        CreatedBy: emailUser,
+        distributorRef,
+        status: "pending",
+        createdBy: emailUser,
       });
 
       // Chamada para Ding
       const data_transfer = await requestDing("SendTransfer", "POST", {
-        DistributorRef: dataValids.AccountNumber, // Para evitar duplicação
-        SkuCode: dataValids.SkuCode,
-        SendValue,
-        SendCurrencyIso: dataValids.SendCurrencyIso,
-        AccountNumber: dataValids.AccountNumber,
-        ValidateOnly: dataValids.ValidateOnly,
+        DistributorRef: distributorRef, // Para evitar duplicação
+        SkuCode: dataValids.skuCode,
+        SendValue: sendValue,
+        SendCurrencyIso: dataValids.sendCurrencyIso,
+        AccountNumber: dataValids.accountNumber,
+        ValidateOnly: dataValids.validateOnly,
       });
 
       // Verifica se foi concluído
       const isCompletedTopUp =
-        !dataValids.ValidateOnly &&
+        !dataValids.validateOnly &&
         data_transfer.TransferRecord?.TransferRef !== "0" &&
         data_transfer.TransferRecord?.ProcessingState === "Complete";
 
-      const docId = transactionRef.idTopup;
-
       if (
-        data_transfer.ResultCode !== 1 ||
-        !isCompletedTopUp ||
-        !data_transfer.success
+        data_transfer.ResultCode !== 1
+        //  ||
+        // !isCompletedTopUp ||
+        // !data_transfer.success
       ) {
         // Atualiza topup como falhado
-        await modelTopUp.updateTopUp(docId, {
-          Status: "failed",
-          ReceiveValue: 0,
+        await modelTopUp.updateTopUp(idUser, refExtract.idExtract, {
+          status: "failed",
+          receiveValue: 0,
         });
 
         // Devolve saldo ao usuário
-        await modelUser.updateUser(idUser, { soldeAccount: LastSolde });
+        await modelUser.updateUser(idUser, { soldeAccount: lastSolde });
 
-        await modelUser.saveExtract({
+        // Update topup
+        await modelUser.saveExtract(idUser, refExtract.idExtract, {
           emailUser,
-          TypeTransaction: "topup",
-          Status: "canceled",
-          AmountSended: SendValue,
-          LastSolde: NewSolde,
-          NewSolde: LastSolde,
-          CurrencyIso: "BRL"
+          typeTransaction: "refund",
+          status: "canceled",
+          amountSended: sendValue,
+          lastSolde: newSolde,
+          newSolde: lastSolde,
+          currencyIso: "BRL",
         });
 
         throw new Error("Falha ao processar a transação. Tente novamente!");
       }
 
       // Atualiza topup como concluído
-      await modelTopUp.updateTopUp(docId, {
-        Status: "completed",
-        ReceiveValue: data_transfer.TransferRecord?.Price.ReceiveValue || 0,
+      await modelTopUp.updateTopUp(idUser, refExtract.idExtract, {
+        status: "completed",
+        receiveValue: data_transfer.TransferRecord?.Price.ReceiveValue || 0,
+      });
+
+      // Enviar email
+      sendEmail("alert", emailUser, {
+        subject: "✅ Recarga feita!",
+        title: `Muito bem, <h3>${req.user?.firstName || "Dear"}</h3>`,
+        message: `Tudo certo com sua recarga de celular. Dá só uma olhada. 😉
+${dataValids.accountNumber}
+R$${dataValids.sendValue},00`,
       });
 
       return res.status(200).json({

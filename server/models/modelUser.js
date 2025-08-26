@@ -121,9 +121,9 @@ const modelUser = {
   },
 
   // Vamos guardar o extracto
-  saveExtract: async (data, refDoc) => {
+  saveExtract: async (idUser, refDoc, data) => {
     try {
-      const extractCollection = connetion_db.collection("extracts");
+      const extractCollection = connetion_db.collection("users").doc(idUser).collection("extracts");
 
       // Se veio refDoc, usa como ID fixo. Se não, gera automático
       const extractDoc = refDoc

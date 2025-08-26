@@ -3,7 +3,6 @@ const modelUser = require("../models/modelUser");
 const { checkParams } = require("../validators/validateData");
 const bcrypt = require("bcrypt");
 const sendEmail = require("../services/senderEmail");
-const { Timestamp } = require("firebase-admin/firestore");
 require("dotenv").config();
 
 const authUser = {
@@ -50,6 +49,13 @@ const authUser = {
         return res.status(400).json({
           success: false,
           message: "Senha incorreta!",
+        });
+      }
+
+      if (user.acountLocked) {
+        return res.status(401).json({
+          success: false,
+          message: "A sua conta está bloqueada!",
         });
       }
 
@@ -164,10 +170,6 @@ const authUser = {
     }
   },
 
-  validateEmail: (req, res) => {
-    const { token } = req.body;
-  },
-
   // Middleware: checa se usuário está autenticado
   userIsAuthentic: async (req, res, next) => {
     try {
@@ -202,6 +204,34 @@ const authUser = {
         "emailUser",
         userDecoded?.emailUser
       );
+
+      if (!userInfo?.success) {
+        return res.status(401).json({
+          success: false,
+          message: "Não está autorizado!",
+        });
+      }
+
+      if (userInfo?.acountLocked) {
+        return res.status(401).json({
+          success: false,
+          message: "Conta está bloqueada!",
+        });
+      }
+
+      if (String(deviceid) !== String(userDecoded.deviceId)) {
+        const message = "Por medida de segurança a sua conta está bloqueada!";
+        await modelUser.updateUser(userDecoded.idUser, {
+          acountLocked: Boolean(true),
+        });
+        sendEmail("alert", userDecoded.emailUser, {
+          message,
+        });
+        return res.status(401).json({
+          success: false,
+          message,
+        });
+      }
 
       const existingDevice = userInfo?.lastLogins?.[deviceid];
 

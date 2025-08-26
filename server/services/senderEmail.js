@@ -66,8 +66,8 @@ const emailTemplates = {
   }),
 
   alert: (message) => ({
-    subject: "⚠️ Aviso Importante",
-    html: `<h1>Aviso</h1>
+    subject: "Certo",
+    html: `<h1>Ola amigo!</h1>
            <p>${message}</p>`,
   }),
 };
