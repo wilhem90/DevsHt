@@ -1,5 +1,5 @@
 function checkParams(data) {
-  const { emailUser, accountNumber, cpfUser, role } = data;
+  const { emailUser, accountNumber, cpfUser } = data;
 
   if (!emailUser && !accountNumber && !cpfUser) {
     return res.status(400).json({

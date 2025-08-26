@@ -9,17 +9,17 @@ const controlUser = {
     try {
       const dataReceived = req.body || {};
       const {
-        CpfUser,
-        FirstNameUser,
-        PhoneNumber,
-        LastNameUser,
-        EmailUser,
-        CountryUser,
-        PasswordUser,
-        PinTransaction,
+        cpfUser,
+        firstNameUser,
+        phoneNumber,
+        lastNameUser,
+        emailUser,
+        countryUser,
+        passwordUser,
+        pinTransaction,
       } = dataReceived;
 
-      if (!EmailUser || !CpfUser) {
+      if (!emailUser || !cpfUser) {
         return res.status(400).json({
           success: false,
           message: "Deve informar um email e um CPF válido.",
@@ -27,12 +27,15 @@ const controlUser = {
       }
 
       // Normaliza valores
-      const normalizedEmail = EmailUser.toLowerCase();
-      const normalizedCpf = CpfUser.replace(/[.\s-]/g, "");
+      const normalizedEmail = emailUser
+      .replace(/ /g, "")
+      .toLowerCase();
+      
+      const normalizedCpf = cpfUser.replace(/[.\s-]/g, "");
 
       // Verifica duplicidade
-      const userByEmail = await modelUser.getUser("EmailUser", normalizedEmail);
-      const userByCpf = await modelUser.getUser("CpfUser", normalizedCpf);
+      const userByEmail = await modelUser.getUser("emailUser", normalizedEmail);
+      const userByCpf = await modelUser.getUser("cpfUser", normalizedCpf);
 
       if (userByEmail?.idUser || userByCpf?.idUser) {
         return res.status(400).json({
@@ -43,14 +46,14 @@ const controlUser = {
 
       // Valida campos obrigatórios
       const requiredFields = [
-        "CpfUser",
-        "FirstNameUser",
-        "LastNameUser",
-        "EmailUser",
-        "PhoneNumber",
-        "CountryUser",
-        "PasswordUser",
-        "PinTransaction",
+        "cpfUser",
+        "firstNameUser",
+        "lastNameUser",
+        "emailUser",
+        "phoneNumber",
+        "countryUser",
+        "passwordUser",
+        "pinTransaction",
       ];
 
       const missingFields = requiredFields.filter(
@@ -68,7 +71,7 @@ const controlUser = {
       }
 
       // PIN mínimo de 4 dígitos
-      if (PinTransaction.length < 4) {
+      if (pinTransaction.length < 4) {
         return res.status(400).json({
           success: false,
           message: `O PIN deve ter no mínimo 4 dígitos.`,
@@ -77,22 +80,22 @@ const controlUser = {
 
       // Monta objeto do usuário
       const newUserData = {
-        CountryUser: CountryUser.toLowerCase(),
-        CurrencyIso: "BRL",
-        EmailUser: normalizedEmail,
-        EmailVerified: false,
-        FirstNameUser: FirstNameUser.toLowerCase(),
-        LastNameUser: LastNameUser.toLowerCase(),
-        PasswordUser: await bcrypt.hash(PasswordUser, 10),
-        PinTransaction: await bcrypt.hash(PinTransaction, 10),
-        PhoneNumber,
-        RoleUser: "client",
-        SoldeAccount: 0.0,
-        UserAcitve: false,
-        CpfUser: normalizedCpf,
-        LastLogins: [],
-        Admins: [],
-        Managers: [],
+        countryUser: countryUser.toLowerCase(),
+        currencyIso: "BRL",
+        emailUser: normalizedEmail,
+        emailVerified: false,
+        firstNameUser: firstNameUser.toLowerCase(),
+        lastNameUser: lastNameUser.toLowerCase(),
+        passwordUser: await bcrypt.hash(passwordUser, 10),
+        pinTransaction: await bcrypt.hash(pinTransaction, 10),
+        phoneNumber,
+        roleUser: "client",
+        soldeAccount: 0.0,
+        userAcitve: false,
+        cpfUser: normalizedCpf,
+        lastLogins: [],
+        admins: [],
+        managers: [],
       };
 
       const refUserCreated = await modelUser.createUser(newUserData);

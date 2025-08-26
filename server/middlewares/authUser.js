@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const modelUser = require("../models/modelUser");
 const { checkParams } = require("../validators/validateData");
 const bcrypt = require("bcrypt");
+const sendEmail = require("../services/senderEmail");
+const { Timestamp } = require("firebase-admin/firestore");
 require("dotenv").config();
 
 const authUser = {
@@ -28,8 +30,11 @@ const authUser = {
       }
 
       // Buscar usuário
-      const user = await modelUser.getUser(path, value);
-      if (!user) {
+      const user = await modelUser.getUser(
+        path,
+        value.toLowerCase().replace(/ /g, "")
+      );
+      if (!user.success) {
         return res.status(404).json({
           success: false,
           message: "Usuário não encontrado!",
@@ -60,6 +65,7 @@ const authUser = {
 
       // Se device ainda não existe → criar como inativo
       if (!existingDevice) {
+        sendEmail("validateDevice", user.emailUser, { code: "458921" });
         await modelUser.updateUser(user.idUser, {
           lastLogins: {
             ...user.lastLogins,
@@ -83,6 +89,23 @@ const authUser = {
 
       // Se device existe mas está inativo → bloqueia também
       if (!existingDevice.active) {
+        // Vamos criar um componente no lado cliente para validar aparelho
+        const isTokenValidDeviceExpire =
+          (Date.now() -
+            Date.parse(user.lastLogins[deviceId].updatedAt.toDate())) /
+          (1000 * 60);
+
+        if (isTokenValidDeviceExpire > 15) {
+          sendEmail("validateDevice", user.emailUser, { code: "458921" });
+          modelUser.updateUser(user.idUser, {
+            lastLogins: {
+              [deviceId]: {
+                ...user.lastLogins[deviceId],
+                updatedAt: new Date(),
+              },
+            },
+          });
+        }
         return res.status(403).json({
           success: false,
           message:
@@ -139,6 +162,10 @@ const authUser = {
           message: error.message,
         });
     }
+  },
+
+  validateEmail: (req, res) => {
+    const { token } = req.body;
   },
 
   // Middleware: checa se usuário está autenticado

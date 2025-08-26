@@ -29,7 +29,7 @@ const modelUser = {
       const refNewUser = await connetion_db.collection("users").add({
         ...newUser,
         accountNumber: String(accountNumber),
-        updateAt: Timestamp.fromDate(new Date()),
+        updatedAt: Timestamp.fromDate(new Date()),
         createdAt: Timestamp.fromDate(new Date()),
       });
 
@@ -85,7 +85,6 @@ const modelUser = {
       }
 
       const doc = snapshot.docs[0];
-      let queryTransactionUser = connetion_db.collectionGroup("extracts").where(fieldPath, "==", value)
 
       return {
         success: true,
