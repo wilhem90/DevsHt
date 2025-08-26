@@ -7,7 +7,8 @@ const walletController = {
   //    Adicionar saldo para um usuário Somente manager pode adicionar
   addOrRemovefunds: async (req, res) => {
     try {
-      const { accountNumber, amount, action, pinTransaction, refDeposit } = req.body;
+      const { accountNumber, amount, action, pinTransaction, refDeposit } =
+        req.body;
       const emailUser = req.user.emailUser;
 
       // if (
@@ -61,7 +62,10 @@ const walletController = {
           ? lastSolde + amount
           : lastSolde;
 
-      if (action === "confirm-deposit" && (refDeposit === undefined || !refDeposit)) {
+      if (
+        action === "confirm-deposit" &&
+        (refDeposit === undefined || !refDeposit)
+      ) {
         return res.status(400).json({
           success: false,
           message: "Deve enviar a referencia do deposito!",
@@ -99,11 +103,13 @@ const walletController = {
       });
 
       const message =
-        action === "add"
-          ? "Saldo adicionado com sucesso."
-          : "O valor foi retirado com sucesso.";
+        action === "remove"
+          ? "O valor foi retirado com sucesso."
+          : "Saldo adicionado com sucesso.";
 
-          sendEmail("alert", targetUser.emailUser, { message: `${message} <p>Valor: R$ ${amount},00</p> <p>Saldo antes: ${lastSolde}</p> <p>Novo saldo: ${newSolde}</p> <p>Date: ${new Date()}</p>` } )
+      sendEmail("alert", targetUser.emailUser, {
+        message: `${message} <p>Valor: R$ ${amount},00</p> <p>Saldo antes: ${lastSolde}</p> <p>Novo saldo: ${newSolde}</p> <p>Date: ${new Date()}</p>`,
+      });
 
       return res.status(200).json({
         success: true,
