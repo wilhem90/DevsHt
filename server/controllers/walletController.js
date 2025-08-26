@@ -51,6 +51,7 @@ const walletController = {
           message: "Usuário não encontrado.",
         });
       }
+
       const idUser = targetUser.idUser;
       const lastSolde = targetUser.soldeAccount || 0;
       const newSolde =
@@ -108,7 +109,7 @@ const walletController = {
           : "Saldo adicionado com sucesso.";
 
       sendEmail("alert", targetUser.emailUser, {
-        message: `${message} <p>Valor: R$ ${amount},00</p> <p>Saldo antes: ${lastSolde}</p> <p>Novo saldo: ${newSolde}</p> <p>Date: ${new Date()}</p>`,
+        message: `${message} <p>Valor: R$ ${amount},00</p> <p>Saldo antes: R$ ${lastSolde}</p> <p>Novo saldo: R$ ${newSolde}</p> <p>Date: ${new Date()}</p>`,
       });
 
       return res.status(200).json({
