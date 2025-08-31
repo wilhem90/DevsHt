@@ -1,15 +1,16 @@
 const jwt = require("jsonwebtoken");
-const modelUser = require("../models/modelUser");
-const { checkParams } = require("../validators/validateData");
 const bcrypt = require("bcrypt");
-const sendEmail = require("../services/senderEmail");
 require("dotenv").config();
 
+const modelUser = require("../models/modelUser.js");
+const { checkParams } = require("../validators/validateData.js");
+const sendEmail = require("../services/senderEmail.js");
+
 const authUser = {
-  // criar login
+  // Criar login
   createLogin: async (req, res) => {
     try {
-      const ipUser = req.ip || req.connection.remoteAddress;
+      const ipUser = req.ip || req.connection?.remoteAddress;
       let { passwordUser, deviceId } = req.body;
       const deviceName = req.headers["user-agent"];
       const { path, value } = checkParams(req.body);
@@ -33,7 +34,8 @@ const authUser = {
         path,
         value.toLowerCase().replace(/ /g, "")
       );
-      if (!user.success) {
+
+      if (!user?.success) {
         return res.status(404).json({
           success: false,
           message: "Usuário não encontrado!",
@@ -71,7 +73,23 @@ const authUser = {
 
       // Se device ainda não existe → criar como inativo
       if (!existingDevice) {
-        sendEmail("validateDevice", user.emailUser, { code: "458921" });
+        const codeValidation = String(
+          Math.floor(100_000 + Math.random() * 900_000)
+        );
+
+        // Corrigido: hash do código de verificação
+        const hashedCode = await bcrypt.hash(codeValidation, 10);
+
+        sendEmail.alert(
+          user.emailUser,
+          user.firstNameUser,
+          `Alguém tentou acessar sua conta.
+          Se era você, precisa validar esse aparelho.
+          <p> Código: <strong>${codeValidation}</strong></p>.
+          Caso contrário, não se preocupe, sua conta continua protegida.
+          Importante: nunca compartilhe sua senha ou seu <strong>PIN de transação</strong> com ninguém!`
+        );
+
         await modelUser.updateUser(user.idUser, {
           lastLogins: {
             ...user.lastLogins,
@@ -81,6 +99,7 @@ const authUser = {
               createdAt: new Date(),
               updatedAt: new Date(),
               active: false,
+              codeValidation: hashedCode, // Armazenar o hash, não o código em texto puro
             },
           },
         });
@@ -89,33 +108,6 @@ const authUser = {
           success: false,
           message:
             "Novo dispositivo detectado. É necessário ativá-lo antes de continuar.",
-          deviceId,
-        });
-      }
-
-      // Se device existe mas está inativo → bloqueia também
-      if (!existingDevice.active) {
-        // Vamos criar um componente no lado cliente para validar aparelho
-        const isTokenValidDeviceExpire =
-          (Date.now() -
-            Date.parse(user.lastLogins[deviceId].updatedAt.toDate())) /
-          (1000 * 60);
-
-        if (isTokenValidDeviceExpire > 15) {
-          sendEmail("validateDevice", user.emailUser, { code: "458921" });
-          modelUser.updateUser(user.idUser, {
-            lastLogins: {
-              [deviceId]: {
-                ...user.lastLogins[deviceId],
-                updatedAt: new Date(),
-              },
-            },
-          });
-        }
-        return res.status(403).json({
-          success: false,
-          message:
-            "Este dispositivo ainda não foi ativado. Confirme o dispositivo para continuar.",
           deviceId,
         });
       }
@@ -130,7 +122,7 @@ const authUser = {
         deviceName,
       };
 
-      const expiresInSeconds = 60 * 60;
+      const expiresInSeconds = 60 * 60 * 24; // 24h
       const access_token = jwt.sign(payload, process.env.API_KEY_TOKEN, {
         expiresIn: expiresInSeconds,
       });
@@ -165,9 +157,115 @@ const authUser = {
         .status(["Não está autorizado!"].includes(error.message) ? 401 : 500)
         .json({
           success: false,
-          message: error.message,
+          message: "Erro durante o login. Tente novamente.",
         });
     }
+  },
+
+  // Esqueci minha senha gerar um token
+  forgetPassword: async (req, res) => {
+    try {
+      const { path, value } = checkParams(req.body);
+
+      // Validação adicional
+      if (!path || !value) {
+        return res.status(400).json({
+          success: false,
+          message: "Parâmetros inválidos para recuperação de senha.",
+        });
+      }
+
+      const isAccountExist = await modelUser.getUser(path, value);
+
+      if (!isAccountExist?.success) {
+        // Não revelar se o email existe ou não por questões de segurança
+        return res.status(200).json({
+          success: true,
+          message:
+            "Se o email existir em nossa base, enviaremos instruções de recuperação.",
+        });
+      }
+
+      // Token expira em 5 minutos
+      const expiresInSeconds = 60 * 5;
+      const tokenResetPassword = jwt.sign(
+        {
+          emailUser: isAccountExist.emailUser,
+          id: isAccountExist.idUser,
+        },
+        process.env.API_KEY_TOKEN,
+        { expiresIn: expiresInSeconds }
+      );
+
+      await modelUser.updateUser(isAccountExist.idUser, {
+        forgetPassword: true,
+      });
+
+      // Aqui você deveria enviar o email com o token
+      // sendEmail.resetPassword(...)
+
+      return res.status(200).json({
+        success: true,
+        message: "Instruções de recuperação enviadas para seu email.",
+        expiresInSeconds,
+      });
+    } catch (error) {
+      console.error("forgetPassword:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Algo deu errado, tente novamente!",
+      });
+    }
+  },
+
+  sendCodeValidateDevice: async (req, res) => {
+    // Se device existe mas está inativo
+    const { deviceid: deviceId  } = req.headers;
+    const existingDevice = req.user?.lastLogins?.[deviceId];
+
+    if (existingDevice.active) {
+      return;
+    }
+    const codeValidation = String(
+      Math.floor(100_000 + Math.random() * 900_000)
+    );
+    const minutesSinceLastUpdate =
+    (Date.now() - Date.parse(existingDevice.updatedAt.toDate())) /
+    (1000 * 60);
+
+    // reenviar código caso já tenham passado 15min
+    if (minutesSinceLastUpdate > 15) {
+      // Corrigido: hash do código de verificação
+      const hashedCode = await bcrypt.hash(codeValidation, 10);
+
+      sendEmail.alert(
+        user.emailUser,
+        user.firstNameUser,
+        `Alguém tentou acessar sua conta.
+            Se era você, precisa validar esse aparelho.
+            <p> Código: <strong>${codeValidation}</strong></p>.
+            Caso contrário, não se preocupe, sua conta continua protegida.
+            Importante: nunca compartilhe sua senha ou seu <strong>PIN de transação</strong> com ninguém!`
+      );
+
+      await modelUser.updateUser(user.idUser, {
+        lastLogins: {
+          ...user.lastLogins,
+          [deviceId]: {
+            ...user.lastLogins[deviceId],
+            codeValidation: hashedCode,
+            updatedAt: new Date(),
+          },
+        },
+      });
+    }
+
+    return res.status(403).json({
+      success: false,
+      message:
+        "Este dispositivo ainda não foi ativado. Confirme o dispositivo para continuar.",
+      deviceId,
+    });
   },
 
   // Middleware: checa se usuário está autenticado
@@ -199,7 +297,7 @@ const authUser = {
       // Verifica JWT
       const userDecoded = jwt.verify(token, process.env.API_KEY_TOKEN);
 
-      // Busca usuário pelo email do token
+      // Busca usuário
       const userInfo = await modelUser.getUser(
         "emailUser",
         userDecoded?.emailUser
@@ -212,62 +310,48 @@ const authUser = {
         });
       }
 
-      if (userInfo?.acountLocked) {
+      if (userInfo.acountLocked) {
         return res.status(401).json({
           success: false,
           message: "Conta está bloqueada!",
         });
       }
 
+      // Verifica se o deviceId do token é o mesmo
       if (String(deviceid) !== String(userDecoded.deviceId)) {
         const message = "Por medida de segurança a sua conta está bloqueada!";
         await modelUser.updateUser(userDecoded.idUser, {
-          acountLocked: Boolean(true),
+          acountLocked: true,
         });
-        sendEmail("alert", userDecoded.emailUser, {
-          message,
-        });
-        return res.status(401).json({
-          success: false,
-          message,
-        });
+
+        sendEmail.alert(userInfo.emailUser, userInfo.firstNameUser, message);
+
+        return res.status(401).json({ success: false, message });
       }
 
-      const existingDevice = userInfo?.lastLogins?.[deviceid];
-
-      // Se device existe mas está inativo → bloqueia também
-      if (!existingDevice?.active) {
-        return res.status(403).json({
-          success: false,
-          message: "Este dispositivo ainda não foi ativado.",
-          deviceid,
-        });
-      }
-
-      if (!userInfo?.idUser || !userInfo?.userAcitve) {
+      if (!userInfo.idUser) {
         return res.status(401).json({
           success: false,
           message: "Não está autorizado!",
         });
       }
 
-      // Injeta usuário no req
-      req.user = userInfo;
+      req.user = userInfo; // injeta usuário no req
+      req.user.deviceid = deviceid;
       next();
     } catch (error) {
       console.error("userIsAuthentic:", error.message);
-      return res
-        .status(
-          ["Não está autorizado!", "invalid signature", "jwt expired"].includes(
-            error.message
-          )
-            ? 401
-            : 500
-        )
-        .json({
-          success: false,
-          message: error.message,
-        });
+
+      // Mensagem genérica para não expor detalhes do erro
+      const message =
+        error.name === "TokenExpiredError"
+          ? "Sessão expirada. Faça login novamente."
+          : "Falha na autenticação. Tente novamente.";
+
+      return res.status(401).json({
+        success: false,
+        message,
+      });
     }
   },
 };

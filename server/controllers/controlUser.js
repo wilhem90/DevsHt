@@ -27,10 +27,8 @@ const controlUser = {
       }
 
       // Normaliza valores
-      const normalizedEmail = emailUser
-      .replace(/ /g, "")
-      .toLowerCase();
-      
+      const normalizedEmail = emailUser.replace(/ /g, "").toLowerCase();
+
       const normalizedCpf = cpfUser.replace(/[.\s-]/g, "");
 
       // Verifica duplicidade
@@ -145,6 +143,7 @@ const controlUser = {
         "userAcitve",
         "soldeAccount",
         "emailUser",
+        "codeValidation",
       ];
 
       // Valida se mandou algo fora da lista
@@ -161,16 +160,46 @@ const controlUser = {
 
       // Caso especial: lastLogins
       const { lastLogins } = req.body;
-      if (
-        lastLogins &&
-        (typeof lastLogins !== "object" ||
-          !["remove", "add"].includes(lastLogins.op))
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "lastLogins deve ser um objeto com op (remove/add) e tokenRef.",
-        });
+      const refUser = await modelUser.getUser(path, value);
+      if (lastLogins) {
+        if (
+          typeof lastLogins !== "object" ||
+          !["remove", "add"].includes(lastLogins.op)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "lastLogins deve ser um objeto com op (remove/add) e tokenRef.",
+          });
+        }
+
+        if (lastLogins.op === "add") {
+          const isMatchCode = bcrypt.compareSync(
+            data.codeValidation,
+            refUser.lastLogins[deviceId]?.codeValidation
+          );
+          if (!isMatchCode) {
+            return res.status(400).json({
+              success: false,
+              message: "Deve enviar o codigo de validação.",
+            });
+          }
+
+          data.lastLogins = {
+            ...refUser.lastLogins,
+            [deviceId]: {
+              active: Boolean(true),
+              updatedAt: new Date(),
+            },
+          };
+        }
+
+        if (lastLogins.op === "remove") {
+          delete refUser.lastLogins[deviceId];
+          data.lastLogins = {
+            ...refUser.lastLogins,
+          };
+        }
       }
 
       // Localiza usuário que vai ser atualizado
@@ -180,13 +209,6 @@ const controlUser = {
         role: req?.user?.roleUser,
       });
 
-      const refUser = await modelUser.getUser(
-        path,
-        value,
-        req.user.roleUser,
-        req.user.emailUser
-      );
-
       if (!refUser.idUser) {
         return res.status(400).json({
           success: false,
@@ -194,47 +216,6 @@ const controlUser = {
             "Usuário não encontrado ou sem permissão para completar essa ação!",
         });
       }
-
-      if (data.soldeAccount) {
-        // Apenas manager pode alterar saldo
-        if (req.user.roleUser !== "manager") {
-          return {
-            success: false,
-            message: "Não está autorizado a alterar saldo.",
-          };
-        }
-
-        // Valida saldo recebido
-        const valueToAdd = Number(data.soldeAccount);
-        if (isNaN(valueToAdd) || valueToAdd <= 0) {
-          return {
-            success: false,
-            message: "Valor de saldo inválido.",
-          };
-        }
-
-        // Saldo anterior e novo
-        const LastSolde = req.user.soldeAccount || 0;
-        const NewSolde = LastSolde + valueToAdd;
-
-        // Atualiza o saldo no usuário
-        await modelUser.updateUser(req.user.idUser, {
-          soldeAccount: NewSolde,
-        });
-
-        // Salva no extrato
-        await modelUser.saveExtract({
-          emailUser: req.user.emailUser,
-          TypeTransaction: "add",
-          Status: "completed",
-          AmountAdded: valueToAdd,
-          LastSolde,
-          NewSolde,
-          CurrencyIso: "BRL"
-        });
-      }
-
-      delete data.soldeAccount;
 
       // Criptografa senha caso venha passwordUser
       if (data.passwordUser) {
@@ -250,7 +231,6 @@ const controlUser = {
 
       // Atualiza no banco
       const responseUpdated = await modelUser.updateUser(refUser.idUser, data);
-
       if (!responseUpdated.success) {
         return res.status(400).json({
           success: false,

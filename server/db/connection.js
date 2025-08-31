@@ -6,6 +6,7 @@ initializeApp({
   credential: applicationDefault(),
 });
 
-const connetion_db = getFirestore();
+const connection_db = getFirestore();
 
-module.exports = { connetion_db, Timestamp, FieldValue, Filter, getStorage, getDownloadURL };
+
+module.exports = { connection_db, Timestamp, FieldValue, Filter, getStorage, getDownloadURL };

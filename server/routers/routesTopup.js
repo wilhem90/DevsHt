@@ -1,6 +1,6 @@
 const express = require("express");
-const controlTopUp = require("../controllers/controlTopup");
-const authUser = require("../middlewares/authUser");
+const controlTopUp = require("../controllers/controlTopup.js");
+const authUser = require("../middlewares/authUser.js");
 const routerUser = express.Router();
 
 routerUser.get("/countries", authUser.userIsAuthentic, controlTopUp.GetCountries)

@@ -1,4 +1,4 @@
-const { connetion_db, Timestamp } = require("../db/connection");
+const { connection_db, Timestamp } = require("../db/connection.js");
 
 const modelUser = {
   // Criando usuario
@@ -12,7 +12,7 @@ const modelUser = {
       }
 
       const accountNumber = String(getNextAccountNumber(9));
-      const refAccount = await connetion_db
+      const refAccount = await connection_db
         .collection("users")
         .where("accountNumber", "==", accountNumber)
         .get();
@@ -26,7 +26,7 @@ const modelUser = {
         };
       }
 
-      const refNewUser = await connetion_db.collection("users").add({
+      const refNewUser = await connection_db.collection("users").add({
         ...newUser,
         accountNumber: String(accountNumber),
         updatedAt: Timestamp.fromDate(new Date()),
@@ -56,7 +56,7 @@ const modelUser = {
 
       const updateData = { ...data, updateAt: Timestamp.fromDate(new Date()) };
 
-      await connetion_db.collection("users").doc(idUser).update(updateData);
+      await connection_db.collection("users").doc(idUser).update(updateData);
       return {
         success: true,
         message: "Atualizada com sucesso!",
@@ -73,7 +73,7 @@ const modelUser = {
   // Buscar usuarios
   getUser: async (fieldPath, value) => {
     try {
-      let query = connetion_db.collection("users");
+      let query = connection_db.collection("users");
       query = query.where(fieldPath, "==", value);
       const snapshot = await query.get();
 
@@ -85,11 +85,12 @@ const modelUser = {
       }
 
       const doc = snapshot.docs[0];
-
+      console.log(new Date());
       return {
         success: true,
         idUser: doc.id,
         ...doc.data(),
+        refUser: doc._ref,
       };
     } catch (error) {
       console.error("Erro localizado na função modelUser.getUser:", error);
@@ -101,7 +102,7 @@ const modelUser = {
   },
 
   deleteUser: async (emailUser) => {
-    const userRef = connetion_db
+    const userRef = connection_db
       .collection("users")
       .where("emailUser", "==", emailUser);
     const users = await userRef.get();
@@ -113,40 +114,11 @@ const modelUser = {
       };
     }
 
-    await connetion_db.collection("users").doc(id).delete();
+    await connection_db.collection("users").doc(id).delete();
     return {
       success: true,
       message: "Conta deletada com successo!",
     };
-  },
-
-  // Vamos guardar o extracto
-  saveExtract: async (idUser, refDoc, data) => {
-    try {
-      const extractCollection = connetion_db.collection("users").doc(idUser).collection("extracts");
-
-      // Se veio refDoc, usa como ID fixo. Se não, gera automático
-      const extractDoc = refDoc
-        ? extractCollection.doc(refDoc)
-        : extractCollection.doc();
-
-      await extractDoc.set({
-        ...data,
-        createdAt: Timestamp.fromDate(new Date()),
-        updatedAt: Timestamp.fromDate(new Date()),
-      });
-
-      return {
-        success: true,
-        idExtract: extractDoc.id,
-      };
-    } catch (error) {
-      console.error("Erro ao salvar extract:", error);
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
   },
 };
 
