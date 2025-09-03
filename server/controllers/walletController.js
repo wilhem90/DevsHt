@@ -69,7 +69,23 @@ const walletController = {
       }
 
       const userRef = connection_db.collection("users").doc(targetUser.idUser);
-      const extractRef = userRef.collection("extracts").doc();
+      const extractRef = userRef.collection("extracts").doc(refDeposit);
+      const transactionExist = await extractRef?.get()
+
+      if (transactionExist?.data()?.status !== "pending" || !transactionExist) {
+        return res.status(403).json({
+          success: false,
+          message: "Essa transação já foi atendida!"
+        })
+      }
+
+
+      if (parseFloat(transactionExist.data().amount) !== amount) {
+        return res.status(403).json({
+          success: false,
+          message: "O valor informado não corresponde."
+        })
+      }
 
       const result = await connection_db.runTransaction(async (t) => {
         const userSnap = await t.get(userRef);
@@ -81,17 +97,14 @@ const walletController = {
         if (action === "add" || action === "confirm-deposit")
           newSolde += amount;
         if (action === "remove") newSolde -= amount;
-        if (newSolde < 0) throw new Error("Saldo insuficiente.");
 
         t.update(userRef, { soldeAccount: newSolde });
-
-        t.set(extractRef, {
+        t.update(extractRef, {
           typeTransaction: action === "remove" ? "cash-out" : "cash-in",
-          createdBy: emailUser,
+          aprovedBy: emailUser,
           lastSolde,
           amount,
           newSolde,
-          refDeposit: refDeposit || null,
           createdAt: new Date(),
           status: "completed",
         });
@@ -177,6 +190,7 @@ const walletController = {
         });
       });
 
+      sendEmail.invoice(userInfo.emailUser, userInfo.firstNameUser, amount, "Deposito foi criado.", userInfo.soldeAccount, userInfo.soldeAccount, new Date(), extractRef.id)
       return res.status(201).json({
         success: true,
         message: "Depósito criado com sucesso! Aguarde confirmação.",

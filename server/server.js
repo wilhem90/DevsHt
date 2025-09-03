@@ -1,6 +1,6 @@
 const express = require("express")
 const app  = express()
-const routerCentral = require("./routerCentral.js")
+const routerCentral = require("./routerCentral.routes.js")
 const cors = require("cors")
 const morgan = require("morgan")
 const { urlencoded } = require("express")

@@ -8,5 +8,4 @@ initializeApp({
 
 const connection_db = getFirestore();
 
-
 module.exports = { connection_db, Timestamp, FieldValue, Filter, getStorage, getDownloadURL };

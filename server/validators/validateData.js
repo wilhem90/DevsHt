@@ -1,3 +1,5 @@
+const { DateTime } = require("luxon");
+
 function checkParams(data) {
   const { emailUser, accountNumber, cpfUser } = data;
 
@@ -7,7 +9,7 @@ function checkParams(data) {
       message: "Deve informar o: emailUser ou accountNumber ou cpfUser valido!",
     });
   }
-  
+
   const path = emailUser
     ? "emailUser"
     : accountNumber
@@ -18,4 +20,13 @@ function checkParams(data) {
   return { path, value };
 }
 
-module.exports = { checkParams };
+const loterries_Active = ["tenese", "texas", "georgia", "florida", "newyork"];
+
+function periodTimeValid() {
+  return DateTime.now()
+  .setZone("America/Port-au-Prince")
+  .toFormat("yyyy-MM-dd, HH:mm:ss");
+}
+
+
+module.exports = { checkParams, loterries_Active, periodTimeValid };

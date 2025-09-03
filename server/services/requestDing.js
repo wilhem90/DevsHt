@@ -27,7 +27,6 @@ async function requestDing(url, method = "GET", data = null) {
     }
 
     const data_topup = await response.json();
-    console.log(data_topup);
     
     return {
       success: true,

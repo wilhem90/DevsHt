@@ -2,6 +2,63 @@ const modelTopUp = require("../models/modelTopUp.js");
 const { requestDing } = require("../services/requestDing.js");
 const sendEmail = require("../services/senderEmail.js");
 
+function generatePriceTiers(
+  minValue,
+  maxValue,
+  step,
+  startPercent,
+  endPercent
+) {
+  if (minValue < 0 || maxValue <= 0 || step <= 0) {
+    throw new Error("Invalid price tier parameters");
+  }
+
+  const tiers = [];
+  const stepsCount = Math.floor((maxValue - minValue) / step);
+  const percentStep = (startPercent - endPercent) / stepsCount;
+
+  for (let i = 0; i <= stepsCount; i++) {
+    const tierMin = minValue + i * step;
+    const tierMax = i === stepsCount ? Infinity : tierMin + step - 1;
+    const percent = startPercent - percentStep * i;
+    tiers.push({
+      min: tierMin,
+      max: tierMax,
+      percent: Number(percent.toFixed(2)),
+    });
+  }
+  return tiers;
+}
+
+const PRICE_TIERS = generatePriceTiers(0, 150, 10, 0.25, 0.1);
+
+function getPercent(value, tiers = PRICE_TIERS) {
+  const tier = tiers.find((t) => value >= t.min && value <= t.max);
+  return tier ? tier.percent : 0;
+}
+
+function calculatePrice(value, isReverse = false, tiers = PRICE_TIERS) {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+
+  if (typeof num !== "number" || isNaN(num) || !isFinite(num)) {
+    throw new Error("Invalid value for calculation");
+  }
+
+  if (!isReverse) {
+    const percent = getPercent(num, tiers);
+    const result = num + num * percent;
+    return result < 10 ? 10 : Number(result.toFixed(2));
+  }
+
+  for (const tier of tiers) {
+    const original = num / (1 + tier.percent);
+    if (original >= tier.min && original <= tier.max) {
+      return Number(original.toFixed(2));
+    }
+  }
+  return num;
+}
+
 // Control topup
 const controlTopUp = {
   // Buscamos todos os paises
@@ -52,16 +109,27 @@ const controlTopUp = {
         `GetProducts?accountNumber=${AccountNumber}&providerCodes=${ProviderCodes}`,
         "GET"
       );
-      return res.status(200).json({
-        success: true,
-        ...data_products,
-      });
+      if (data_products.ResultCode !== 1)
+        throw new Error("Failed to fetch operators");
+
+      const availableValues = data_products.Items.reduce((acc, item) => {
+        acc[item.SkuCode] = {
+          ...item,
+          Minimum: {
+            ...item.Minimum,
+            SendValue: calculatePrice(item.Minimum.SendValue),
+          },
+          Maximum: {
+            ...item.Maximum,
+            SendValue: calculatePrice(item.Maximum.SendValue),
+          },
+        };
+        return acc;
+      }, {});
+
+      res.status(200).json({ success: true, data: availableValues });
     } catch (error) {
-      console.log(error);
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 

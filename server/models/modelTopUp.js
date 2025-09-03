@@ -1,6 +1,63 @@
 const { connection_db, Timestamp } = require("../db/connection.js");
 const { requestDing } = require("../services/requestDing.js");
 
+function generatePriceTiers(
+  minValue,
+  maxValue,
+  step,
+  startPercent,
+  endPercent
+) {
+  if (minValue < 0 || maxValue <= 0 || step <= 0) {
+    throw new Error("Invalid price tier parameters");
+  }
+
+  const tiers = [];
+  const stepsCount = Math.floor((maxValue - minValue) / step);
+  const percentStep = (startPercent - endPercent) / stepsCount;
+
+  for (let i = 0; i <= stepsCount; i++) {
+    const tierMin = minValue + i * step;
+    const tierMax = i === stepsCount ? Infinity : tierMin + step - 1;
+    const percent = startPercent - percentStep * i;
+    tiers.push({
+      min: tierMin,
+      max: tierMax,
+      percent: Number(percent.toFixed(2)),
+    });
+  }
+  return tiers;
+}
+
+const PRICE_TIERS = generatePriceTiers(0, 150, 10, 0.25, 0.1);
+
+function getPercent(value, tiers = PRICE_TIERS) {
+  const tier = tiers.find((t) => value >= t.min && value <= t.max);
+  return tier ? tier.percent : 0;
+}
+
+function calculatePrice(value, isReverse = false, tiers = PRICE_TIERS) {
+  const num = typeof value === "string" ? parseFloat(value) : value;
+
+  if (typeof num !== "number" || isNaN(num) || !isFinite(num)) {
+    throw new Error("Invalid value for calculation");
+  }
+
+  if (!isReverse) {
+    const percent = getPercent(num, tiers);
+    const result = num + num * percent;
+    return result < 10 ? 10 : Number(result.toFixed(2));
+  }
+
+  for (const tier of tiers) {
+    const original = num / (1 + tier.percent);
+    if (original >= tier.min && original <= tier.max) {
+      return Number(original.toFixed(2));
+    }
+  }
+  return num;
+}
+
 const modelTopUp = {
   // Criando usuario
   createTopUp: async (dataTopup, userData) => {
@@ -50,7 +107,7 @@ const modelTopUp = {
       // 🔹 Segundo: chama API externa (Ding)
       const responseDing = await requestDing("SendTransfer", "POST", {
         SkuCode: dataTopup.skuCode,
-        SendValue: dataTopup.sendValue,
+        SendValue: calculatePrice(dataTopup.sendValue, true),
         SendCurrencyIso: dataTopup.sendCurrencyIso,
         AccountNumber: dataTopup.accountNumber,
         DistributorRef: dataTopup.distributorRef,
