@@ -136,13 +136,9 @@ const controlTopUp = {
   // Enviar recarga
   SendTransfer: async (req, res) => {
     try {
-      if (!req.user?.lastLogins[req.user?.deviceid]?.active) {
-        return res.status(401).json({
-          success: false,
-          message: "Não está autorizado!",
-        });
-      }
+      // Verificamos se o device ative para realizar recarga
       if (req.body.sendValue > 250) {
+        console.log("Não pode enviar esse valor");
         return res.status(400).json({
           success: false,
           message: "Não pode enviar esse valor",
@@ -168,6 +164,7 @@ const controlTopUp = {
       );
 
       if (fieldNotFound.length > 0) {
+        console.log("Faltando dados obrigatórios:", fieldNotFound.join(", "));
         return res.status(400).json({
           success: false,
           message: `Faltando dados obrigatórios: ${fieldNotFound.join(", ")}`,
@@ -186,15 +183,16 @@ const controlTopUp = {
       dataValids.validateOnly = Boolean(dataValids.validateOnly);
       const lastSolde = req.user?.soldeAccount || 0;
       const sendValue = Number(dataValids.sendValue);
-      const newSolde = lastSolde - sendValue;
 
       if (lastSolde < sendValue) {
+        console.log("Saldo insuficiente");
         return res.status(400).json({
           success: false,
           message: "Saldo insuficiente.",
         });
       }
 
+      dataValids.sendValueWithTax = calculatePrice(sendValue, true);
       const refTopUp = await modelTopUp.createTopUp(
         {
           ...dataValids,
@@ -206,24 +204,31 @@ const controlTopUp = {
         }
       );
 
-      console.log(refTopUp);
+      if (!refTopUp.success) {
+        throw new Error(refTopUp.message);
+      }
 
       // Enviar email
-      await sendEmail.invoice(
+      await sendEmail.invoiceTopUp(
         req.user.emailUser,
-        req.user.firstName,
+        req.user.firstNameUser,
         sendValue,
-        "✅ Recarga feita!",
-        lastSolde,
-        newSolde,
+        refTopUp.data.amountReceived,
+        dataValids.operatorName,
+        dataValids.accountNumber,
+        dataValids.countryName,
+        refTopUp.data.statusTransaction,
         new Date(),
-        dataValids.accountNumber
+        refTopUp.data.transferId || dataValids.accountNumber
       );
 
       return res.status(200).json({
         success: true,
         message: "Transação processada com sucesso.",
-        data: refTopUp,
+        data: {
+          ...refTopUp.data,
+          transferId: refTopUp.data.transferId || dataValids.accountNumber,
+        },
       });
     } catch (error) {
       console.error("Erro SendTransfer:", error);

@@ -22,11 +22,11 @@ function checkParams(data) {
 
 const loterries_Active = ["tenese", "texas", "georgia", "florida", "newyork"];
 
-function periodTimeValid() {
+function timeValid() {
   return DateTime.now()
   .setZone("America/Port-au-Prince")
-  .toFormat("yyyy-MM-dd, HH:mm:ss");
+  .toFormat("yyyy-MM-dd,HH:mm:ss");
 }
 
 
-module.exports = { checkParams, loterries_Active, periodTimeValid };
+module.exports = { checkParams, loterries_Active, timeValid };

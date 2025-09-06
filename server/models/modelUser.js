@@ -26,6 +26,12 @@ const modelUser = {
         };
       }
 
+      const manager = await connection_db
+        .collection("configApp")
+        .doc("manager")
+        .get();
+      newUser.managers = manager?.data()?.emailUser;
+      
       const refNewUser = await connection_db.collection("users").add({
         ...newUser,
         accountNumber: String(accountNumber),

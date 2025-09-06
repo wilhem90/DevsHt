@@ -1,7 +1,8 @@
 const modelUser = require("../models/modelUser.js");
 const bcrypt = require("bcrypt");
 const { checkParams } = require("../validators/validateData.js");
-const permitions = require("../middlewares/permitions.js");
+const permitions = require("../middlewares/admins.js");
+const sendEmail = require("../services/senderEmail.js");
 
 const controlUser = {
   // Criamos o usuario com unique email
@@ -101,6 +102,7 @@ const controlUser = {
         throw new Error(refUserCreated.message);
       }
 
+      sendEmail.welcomeUser(emailUser, firstNameUser);
       return res.status(201).json({
         success: true,
         message: "Usuário criado com sucesso!",
@@ -200,6 +202,9 @@ const controlUser = {
             ...refUser.lastLogins,
           };
         }
+
+        const message = lastLogins.op === "add" ? "Ativado" : "Removido";
+        sendEmail.alertActivateDevice(refUser.emailUser, refUser.firstNameUser, message);
       }
 
       // Localiza usuário que vai ser atualizado

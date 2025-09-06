@@ -67,7 +67,7 @@ const formatDate = (date) => {
 // Email templates
 const sendEmail = {
   // Bem-vindo
-  welcome: async (emailUser, name) => {
+  welcomeUser: async (emailUser, name) => {
     connectAndSendEmail(
       emailUser,
       "🎉 Bem-vindo ao sistema!",
@@ -77,18 +77,7 @@ const sendEmail = {
     );
   },
 
-  validateEmail: async (emailUser, name, link) => {
-    connectAndSendEmail(
-      emailUser,
-      "📧 Confirme seu e-mail",
-      `<h1>Confirmação de E-mail</h1>
-      <p>Olá ${name},</p>
-      <p>Clique no link abaixo para confirmar seu e-mail:</p>
-      <a href="${link}">${link}</a>
-      <p>Se você não solicitou este e-mail, por favor ignore.</p>`
-    );
-  },
-
+  // Valida o device
   validateDevice: async (emailUser, name, code) => {
     connectAndSendEmail(
       emailUser,
@@ -101,6 +90,7 @@ const sendEmail = {
     );
   },
 
+  // Redefinição de senha
   resetPassword: async (emailUser, name, link) => {
     connectAndSendEmail(
       emailUser,
@@ -109,12 +99,13 @@ const sendEmail = {
       <p>Olá ${name},</p>
       <p>Você solicitou a redefinição de senha. Clique abaixo para continuar:</p>
       <a href="${link}">${link}</a>
-      <p>Este link expira em 1 hora.</p>
+      <p>Este link expira em 5 minutos.</p>
       <p>Se você não solicitou, ignore este e-mail.</p>`
     );
   },
 
-  alert: async (emailUser, name, message) => {
+  // Alerta de seguridade
+  alertSecurity: async (emailUser, name, message) => {
     connectAndSendEmail(
       emailUser,
       "⚠️ Alerta de segurança!",
@@ -140,7 +131,102 @@ const sendEmail = {
     );
   },
 
-  invoice: async (
+  // Invoice recarga
+  invoiceTopUp: async (
+    emailUser,
+    name,
+    amount,
+    amountReceived,
+    operatorName,
+    accountNumber,
+    countryName,
+    statusTransaction,
+    date,
+    transactionId
+  ) => {
+    connectAndSendEmail(
+      emailUser,
+      `📄 Comprovante de Recarga`,
+      `
+  <div style="font-family: Arial, sans-serif; max-width: 650px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #fafafa;">
+    
+    <!-- Cabeçalho -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h1 style="margin: 0; color: #2c3e50;">BERMAX GLOBAL LTDA</h1>
+      <p style="margin: 5px 0; color: #7f8c8d;">Comprovante de Transação ✅</p>
+    </div>
+
+    <!-- Saudação -->
+    <p style="text-transform: capitalize; font-size: 16px;">Olá <strong>${
+      name || "Cliente"
+    }</strong>,</p>
+    <p style="font-size: 15px;">Segue abaixo o comprovante da sua recarga realizada com sucesso:</p>
+
+    <!-- Detalhes da Transação -->
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px;">
+      <tr style="background-color: #f0f0f0;">
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Tipo transação</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd; color: #27ae60; font-weight: bold;">Recarga</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>País</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;">${countryName}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Operadora</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;">${operatorName}</td>
+      </tr>
+      <tr style="background-color: #f0f0f0;">
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Número</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd; color: #000000ff; font-weight: bold;">${accountNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Status</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd; color: ${
+          statusTransaction === "Complete" ? "#27ae60" : "#e74c3c"
+        }; font-weight: bold; text-transform: capitalize;">${statusTransaction}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Valor da Recarga</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>$ ${formatCurrency(
+          amount
+        )}</strong></td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Valor Recebido</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>$ ${amountReceived}</strong></td>
+      </tr>
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Data e Hora</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;">${formatDate(
+          date
+        )}</td>
+      </tr>
+      ${
+        transactionId
+          ? `
+      <tr>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>ID da Transação</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;">${transactionId}</td>
+      </tr>`
+          : ""
+      }
+    </table>
+
+    <!-- Rodapé -->
+    <p style="margin-top: 30px; font-size: 14px; color: #7f8c8d; text-align: center;">
+      Este é um comprovante eletrônico. Não é necessário respondê-lo.
+    </p>
+    <p style="text-align: center; font-size: 12px; color: #999;">
+      © ${new Date().getFullYear()} BERMAX GLOBAL LTDA
+    </p>
+  </div>
+  `
+    );
+  },
+
+  // Inovice ao realizar transferencia interna
+  invoiceTransferInterne: async (
     emailUser,
     name,
     amount,
@@ -209,6 +295,91 @@ const sendEmail = {
     </p>
   </div>
   `
+    );
+  },
+
+  // Inovice ao criar um bilhte no elottoHub
+  invoiceElottoHub: async (
+    emailUser,
+    name,
+    amount,
+    title,
+    balanceBefore,
+    balanceAfter,
+    date,
+    transactionId
+  ) => {
+    connectAndSendEmail(
+      emailUser,
+      `📄 Comprovante Da Transação`,
+      `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+    <h2 style="text-align: center; color: #2c3e50; text-transform: capitalize;">${
+      title || "Comprovante de Transação"
+    }</h2>
+    <p style="text-align: center; color: #27ae60; font-weight: bold;">Operação realizada com sucesso ✅</p>
+    
+    <p style="text-transform: capitalize;">Olá ${name || "Cliente"},</p>
+    <p>Segue o comprovante da sua transação:</p>
+    
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Valor</strong></td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${formatCurrency(
+          amount
+        )}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Saldo Anterior</strong></td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${formatCurrency(
+          balanceBefore
+        )}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Novo Saldo</strong></td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${formatCurrency(
+          balanceAfter
+        )}</td>
+      </tr>
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Data</strong></td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${formatDate(
+          date
+        )}</td>
+      </tr>
+      ${
+        transactionId
+          ? `
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;"><strong>ID da Transação</strong></td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${transactionId}</td>
+      </tr>
+      `
+          : ""
+      }
+    </table>
+
+    <p style="margin-top: 20px; font-size: 14px; color: #7f8c8d;">
+      Este é um comprovante eletrônico. Não é necessário respondê-lo.
+    </p>
+
+    <p style="text-align: center; font-size: 12px; color: #999;">
+      © ${new Date().getFullYear()} BERMAX GLOBAL LTDA
+    </p>
+  </div>
+  `
+    );
+  },
+
+  // Avisando ao usuario o aparelho foi ativado
+  alertActivateDevice: async (emailUser, name, message) => {
+    connectAndSendEmail(
+      emailUser,
+      "📱 Aparelho Ativado",
+      `
+      <h1>Olá ${name}!</h1>
+      <p>Aparelho foi ${message} com sucesso.</p>
+    `
     );
   },
 };

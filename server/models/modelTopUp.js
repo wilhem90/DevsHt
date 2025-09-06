@@ -1,79 +1,25 @@
+const { stat } = require("fs");
 const { connection_db, Timestamp } = require("../db/connection.js");
 const { requestDing } = require("../services/requestDing.js");
 
-function generatePriceTiers(
-  minValue,
-  maxValue,
-  step,
-  startPercent,
-  endPercent
-) {
-  if (minValue < 0 || maxValue <= 0 || step <= 0) {
-    throw new Error("Invalid price tier parameters");
-  }
-
-  const tiers = [];
-  const stepsCount = Math.floor((maxValue - minValue) / step);
-  const percentStep = (startPercent - endPercent) / stepsCount;
-
-  for (let i = 0; i <= stepsCount; i++) {
-    const tierMin = minValue + i * step;
-    const tierMax = i === stepsCount ? Infinity : tierMin + step - 1;
-    const percent = startPercent - percentStep * i;
-    tiers.push({
-      min: tierMin,
-      max: tierMax,
-      percent: Number(percent.toFixed(2)),
-    });
-  }
-  return tiers;
-}
-
-const PRICE_TIERS = generatePriceTiers(0, 150, 10, 0.25, 0.1);
-
-function getPercent(value, tiers = PRICE_TIERS) {
-  const tier = tiers.find((t) => value >= t.min && value <= t.max);
-  return tier ? tier.percent : 0;
-}
-
-function calculatePrice(value, isReverse = false, tiers = PRICE_TIERS) {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-
-  if (typeof num !== "number" || isNaN(num) || !isFinite(num)) {
-    throw new Error("Invalid value for calculation");
-  }
-
-  if (!isReverse) {
-    const percent = getPercent(num, tiers);
-    const result = num + num * percent;
-    return result < 10 ? 10 : Number(result.toFixed(2));
-  }
-
-  for (const tier of tiers) {
-    const original = num / (1 + tier.percent);
-    if (original >= tier.min && original <= tier.max) {
-      return Number(original.toFixed(2));
-    }
-  }
-  return num;
-}
-
 const modelTopUp = {
-  // Criando usuario
+  // Criando TopUp
   createTopUp: async (dataTopup, userData) => {
     try {
       const refUser = connection_db.collection("users").doc(userData.idUser);
-      const refTransaction = refUser.collection("transactions").doc();
-      const refExtract = refUser.collection("extracts").doc();
+      const refCashOut = refUser.collection("transactions").doc(); // transação principal
+      const refRefund = refUser.collection("transactions").doc(); // transação de reembolso (se necessário)
 
       let newSolde;
+      let lastSolde;
+
 
       // 🔹 Primeiro: desconta saldo de forma transacional
       await connection_db.runTransaction(async (t) => {
         const userSnap = await t.get(refUser);
         if (!userSnap.exists) throw new Error("Usuário não encontrado!");
 
-        const lastSolde = userSnap.data().soldeAccount || 0;
+        lastSolde = userSnap.data().soldeAccount || 0;
         if (lastSolde < dataTopup.sendValue) {
           throw new Error("Saldo insuficiente!");
         }
@@ -81,33 +27,26 @@ const modelTopUp = {
         newSolde = lastSolde - dataTopup.sendValue;
 
         // Cria transação pendente
-        t.set(refTransaction, {
+        t.set(refCashOut, {
           ...dataTopup,
           productName: "topup",
           createdAt: Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
           statusTransaction: "pending",
           createdBy: userData.emailUser,
+          typeTransaction: "cash-out",
+          lastSolde,
+          newSolde,
         });
 
         // Atualiza saldo do usuário
         t.update(refUser, { soldeAccount: newSolde });
-
-        // Extrato
-        t.set(refExtract, {
-          typeTransaction: "cash-out",
-          createdBy: userData.emailUser,
-          lastSolde,
-          amount: dataTopup.sendValue,
-          newSolde,
-          refTransaction: refTransaction.id,
-          createdAt: Timestamp.fromDate(new Date()),
-        });
       });
 
       // 🔹 Segundo: chama API externa (Ding)
       const responseDing = await requestDing("SendTransfer", "POST", {
         SkuCode: dataTopup.skuCode,
-        SendValue: calculatePrice(dataTopup.sendValue, true),
+        SendValue: dataTopup.sendValueWithTax,
         SendCurrencyIso: dataTopup.sendCurrencyIso,
         AccountNumber: dataTopup.accountNumber,
         DistributorRef: dataTopup.distributorRef,
@@ -115,10 +54,29 @@ const modelTopUp = {
       });
 
       if (!responseDing.success) {
-        // Se Ding falhar → marcar a transação como failed + devolver saldo
+        // 🔹 Se Ding falhar → rollback (saldo + transação de reembolso)
         await connection_db.runTransaction(async (t) => {
           t.update(refUser, { soldeAccount: newSolde + dataTopup.sendValue });
-          t.update(refTransaction, { statusTransaction: "failed" });
+
+          // marca cashout como failed
+          t.update(refCashOut, {
+            statusTransaction: "failed",
+            updatedAt: Timestamp.fromDate(new Date()),
+          });
+
+          // cria transação de reembolso
+          t.set(refRefund, {
+            productName: "refund-topup",
+            statusTransaction: "completed",
+            typeTransaction: "refund",
+            sendValue: dataTopup.sendValue,
+            sendCurrencyIso: dataTopup.sendCurrencyIso,
+            lastSolde: newSolde,
+            newSolde: newSolde + dataTopup.sendValue,
+            createdBy: userData.emailUser,
+            createdAt: Timestamp.fromDate(new Date()),
+            updatedAt: Timestamp.fromDate(new Date()),
+          });
         });
 
         return {
@@ -128,16 +86,26 @@ const modelTopUp = {
       }
 
       // 🔹 Se Ding OK → confirmar a transação
-      await refTransaction.update({
+      await refCashOut.update({
         statusTransaction: "completed",
         transferRef:
           responseDing?.TransferRecord?.TransferId?.TransferRef || null,
         receiveValue: responseDing?.TransferRecord?.Price?.ReceiveValue || null,
+        updatedAt: Timestamp.fromDate(new Date()),
       });
 
       return {
         success: true,
         message: "Transação concluída com sucesso!",
+        data: {
+         transferId: refCashOut.id,
+          idTopup: responseDing?.TransferRecord?.TransferId?.TransferId || dataTopup.DistributorRef,
+          amountReceived: responseDing?.TransferRecord?.Price?.ReceiveValue,
+          receiveCurrencyIso: responseDing?.TransferRecord?.Price?.ReceiveCurrencyIso,
+          statusTransaction: responseDing?.TransferRecord?.ProcessingState,
+          lastSolde,
+          newSolde,
+        }
       };
     } catch (error) {
       console.error("Erro em createTopUp:", error);
@@ -149,7 +117,7 @@ const modelTopUp = {
     }
   },
 
-  //   Para autualizar
+  // Atualizar TopUp
   updateTopUp: async (idUser, idTopup, data) => {
     try {
       if (!idTopup) throw new Error("ID do topup é obrigatório.");
@@ -158,13 +126,17 @@ const modelTopUp = {
         .doc(idUser)
         .collection("transactions")
         .doc(idTopup)
-        .update({ ...data });
+        .update({
+          ...data,
+          updatedAt: Timestamp.fromDate(new Date()),
+        });
+
       return {
         success: true,
         message: "Atualizada com sucesso!",
       };
     } catch (error) {
-      console.error("Erro em modelUser.updateTopUp:", error);
+      console.error("Erro em modelTopUp.updateTopUp:", error);
       return {
         success: false,
         message: error.message,

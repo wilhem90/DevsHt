@@ -12,5 +12,9 @@ routerCentral.use("/wallet", require("./routers/wallet.Routes.js"));
 
 // Loterias
 routerCentral.use("/tickets", require("./routers/elottoHub.Routes.js"))
+
+// Admins router
+routerCentral.use("/admins", require("./routers/admin.Routes.js"))
+
 // routerCentral.use("/winners", require("./elottoHub/lottoHub/winners/winnersNumbers.routes"))
 module.exports = routerCentral;
