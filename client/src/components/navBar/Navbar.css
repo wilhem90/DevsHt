@@ -3,12 +3,16 @@ header {
   flex-direction: row;
   background-color: white;
   position: sticky;
-  width: 100%;
+  width: calc(100% - 300px);
   padding: 2px 15px;
   height: 120px;
   align-items: center;
   border-bottom: 1px solid #ccc;
   justify-content: space-between;
+  position: fixed;
+  top: 0;
+  padding-right: 20px;
+  z-index: 5;
 }
 
 header .box-left {
@@ -32,7 +36,7 @@ header .box-right {
 
 header .box-right button {
   margin: 0 10px;
-  padding: 10px 25px;
+  padding: 10px 15px;
   display: flex;
   align-items: center;
   background-color: #007bff;
@@ -42,11 +46,14 @@ header .box-right button {
   cursor: pointer;
 }
 
+header .box-right button:hover {
+  opacity: 0.8;
+}
+
 header .box-right button svg {
-  margin-right: 15px;
+  margin-right: 10px;
 }
 
 header .box-right button span {
-  font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }

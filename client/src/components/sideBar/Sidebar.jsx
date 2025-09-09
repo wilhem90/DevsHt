@@ -3,15 +3,17 @@ import "./Sidebar.css";
 import { Link } from "react-router-dom";
 import {
   ArrowDownLeft,
+  ArrowRightLeft,
   ArrowUpRight,
+  BadgeDollarSignIcon,
   Bell,
   ChevronDown,
   CircleUser,
-  GroupIcon,
+  Dices,
+  DollarSign,
+  DollarSignIcon,
   Home,
   Plus,
-  Scale,
-  User,
   Users,
 } from "lucide-react";
 export default function Sidebar() {
@@ -61,15 +63,8 @@ export default function Sidebar() {
           </li>
           <li>
             <Link>
-              <Scale />
-              <span>Balances</span>
-              <ChevronDown className="btn-chevron" />
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <Plus />
-              <span>Add Money</span>
+              <ArrowRightLeft />
+              <span>Transactions</span>
               <ChevronDown className="btn-chevron" />
             </Link>
           </li>
@@ -82,6 +77,21 @@ export default function Sidebar() {
           </li>
           <li>
             <Link>
+              <Dices />
+              <span>Bet</span>
+              <ChevronDown className="btn-chevron" />
+            </Link>
+          </li>
+          <li>
+            <Link>
+              <BadgeDollarSignIcon />
+              <span>Add Money</span>
+              <ChevronDown className="btn-chevron" />
+            </Link>
+          </li>
+
+          <li>
+            <Link>
               <ArrowDownLeft />
               <span>Request</span>
               <ChevronDown className="btn-chevron" />
@@ -91,7 +101,7 @@ export default function Sidebar() {
 
         <ul>
           <li>
-            <Link>
+            <Link className="active">
               <Users />
               <span>Recipients</span>
             </Link>

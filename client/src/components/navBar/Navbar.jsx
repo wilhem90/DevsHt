@@ -1,4 +1,9 @@
-import { ArrowUpRight, MoveDownLeft, Plus } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CircleDollarSign,
+  Dices,
+} from "lucide-react";
 import "./Navbar.css";
 export default function Navbar() {
   return (
@@ -13,11 +18,15 @@ export default function Navbar() {
           <span>Send</span>
         </button>
         <button>
-          <Plus />
-          <span>Add money</span>
+          <Dices />
+          <span>Bet</span>
         </button>
         <button>
-          <MoveDownLeft />
+          <CircleDollarSign />
+          <span>Add</span>
+        </button>
+        <button>
+          <ArrowDownLeft />
           <span>Request</span>
         </button>
       </div>

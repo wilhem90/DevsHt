@@ -16,12 +16,14 @@ body {
   justify-content: space-between;
   position: relative;
   width: 100%;
+  padding-right: 10px;
+  margin-top: 90px;
 }
 
 .container-home .box-central {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 280px);
+  width: calc(100% - 270px);
   overflow: scroll;
   position: absolute;
   right: 0;
@@ -34,5 +36,5 @@ body {
 .container-home .box-central p {
   margin-top: 15px;
   border: 1px solid black;
-  pad
+  padding: 10px;
 }
