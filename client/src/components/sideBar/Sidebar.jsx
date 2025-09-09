@@ -10,21 +10,29 @@ import {
   ChevronDown,
   CircleUser,
   Dices,
-  DollarSign,
-  DollarSignIcon,
   Home,
-  Plus,
   Users,
 } from "lucide-react";
 export default function Sidebar() {
   const [urlAvatar, setUrlAvatar] = useState(null);
+  const [emailUser, setEmailUser] = useState(null)
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser?.avatar) {
-      setUrlAvatar(storedUser.avatar);
+    function loadUser() {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user?.avatar) {
+        setUrlAvatar(user.avatar);
+        setEmailUser(user.emailUser)
+      }
     }
+
+    loadUser();
+
+    window.addEventListener("storage", loadUser);
+    return () => window.removeEventListener("storage", loadUser);
   }, []);
+
+  console.log(urlAvatar);
 
   return (
     <div className="sidbar">
@@ -48,7 +56,7 @@ export default function Sidebar() {
         </div>
 
         <div className="roleUser">
-          <span>Menbership: 4588s84f4se8</span>
+          <span>Email: {emailUser}</span>
         </div>
       </div>
 

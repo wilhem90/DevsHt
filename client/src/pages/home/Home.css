@@ -5,6 +5,13 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+:root {
+  --lightPrimary: #F9FAFB;
+  --lightSegundary: #E5E7EB;
+  --white: #FFFFFF;
+  --blueSegundary: #007bff;
+}
+
 body {
   height: 100vh;
 }
@@ -33,6 +40,36 @@ body {
   overflow: auto;
 }
 
+.container-home .box-central .box-search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.container-home .box-central .box-search .box-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.container-home .box-central .box-filter {
+  display: flex;
+  align-items: center;
+}
+
+.container-home .box-central .box-filter input[type="search"] {
+  background-color: var(--lightsegundary);
+  border: none;
+}
+
+.container-home .box-central .filter {
+  display: flex;
+  align-items: center;
+  margin-left: 25px;
+  background-color: var(--lightsegundary);
+  padding: 10px 15px;
+  border-radius: 5px;
+}
 .container-home .box-central p {
   margin-top: 15px;
   border: 1px solid black;

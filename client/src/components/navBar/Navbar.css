@@ -18,15 +18,36 @@ header {
 header .box-left {
   display: flex;
   flex-direction: column;
+  background-color: var(--lightprimary);
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+header .box-left:hover {
+  background-color: var(--lightsegundary);
+}
+
+header .box-left .amount-solde {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+header .box-left .amount-solde svg {
+  margin-left: 10px;
 }
 
 header .box-left strong {
-  font-size: 2rem;
+  font-size: 1rem;
+  text-align: center;
 }
 
 header .box-left span {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   color: #707070;
+  width: 150px;
+ text-align: center;
 }
 
 header .box-right {
@@ -36,10 +57,10 @@ header .box-right {
 
 header .box-right button {
   margin: 0 10px;
-  padding: 10px 15px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
-  background-color: #007bff;
+  background-color: var(--blueSegundary);
   color: white;
   border: 1px solid #ccc;
   border-radius: 5px;
