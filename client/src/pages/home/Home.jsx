@@ -1,19 +1,524 @@
-import ContainerHome from "../../components/container/ContainerHome.jsx";
-import Navbar from "../../components/navBar/Navbar.jsx";
-import Sidebar from "../../components/sideBar/Sidebar.jsx";
-import "./Home.css"
-
+import Navbar from "../../components/navBar/Navbar";
+import Sidebar from "../../components/sideBar/Sidebar";
+import "./Home.css";
 export default function Home() {
-  document.title = "Home"
   return (
-    <div className="body-home-page">
-      {/* header */}
-      <Navbar />
-
-      {/* Container home page */}
-      <div className="container-home-page">
-        <Sidebar />
-        <ContainerHome />
+    <div className="container-home">
+      <Sidebar />
+      <div className="box-central">
+        <Navbar />
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
+        <br />
+        <br />
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus
+          blanditiis rem error quisquam nobis corporis officiis, obcaecati sed,
+          velit quaerat porro sequi! Corrupti praesentium quibusdam quisquam
+          esse cum saepe doloremque!
+        </p>
       </div>
     </div>
   );

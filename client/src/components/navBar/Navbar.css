@@ -1,0 +1,52 @@
+header {
+  display: flex;
+  flex-direction: row;
+  background-color: white;
+  position: sticky;
+  width: 100%;
+  padding: 2px 15px;
+  height: 120px;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+  justify-content: space-between;
+}
+
+header .box-left {
+  display: flex;
+  flex-direction: column;
+}
+
+header .box-left strong {
+  font-size: 2rem;
+}
+
+header .box-left span {
+  font-size: 1.5rem;
+  color: #707070;
+}
+
+header .box-right {
+  display: flex;
+  flex-direction: row;
+}
+
+header .box-right button {
+  margin: 0 10px;
+  padding: 10px 25px;
+  display: flex;
+  align-items: center;
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+header .box-right button svg {
+  margin-right: 15px;
+}
+
+header .box-right button span {
+  font-weight: bold;
+  font-size: 1.2rem;
+}

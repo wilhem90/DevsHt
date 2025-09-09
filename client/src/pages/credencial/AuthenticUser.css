@@ -1,0 +1,191 @@
+/* Main container styles */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-form-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 450px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Form styles */
+.sign-in, .sign-up {
+  padding: 2rem;
+  display: none;
+  flex-direction: column;
+  transition: opacity 0.3s ease;
+}
+
+.sign-in.active, .sign-up.active {
+  display: flex;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Input field styles */
+.box-input {
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px 15px 12px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+label {
+  position: absolute;
+  top: 12px;
+  left: 40px;
+  font-size: 16px;
+  color: transparent;
+  pointer-events: none;
+  transition: 0.2s ease all;
+}
+
+input:focus ~ label,
+input:not(:placeholder-shown) ~ label {
+  top: -10px;
+  left: 10px;
+  font-size: 12px;
+  background: white;
+  padding: 0 5px;
+  color: #667eea;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 18px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* Name fields layout */
+.name-fields {
+  display: flex;
+  gap: 15px;
+}
+
+.name-fields .box-input {
+  flex: 1;
+}
+
+/* Select field styles */
+.expireAt, .country-user {
+  margin-bottom: 1.2rem;
+}
+
+.expireAt label, .country-user label {
+  position: static;
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #55555500;
+  font-weight: 500;
+}
+
+.expireAt select, .country-user select {
+  padding-left: 15px;
+}
+
+/* Forgot password */
+.forget-password {
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+.forget-password a {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.forget-password a:hover {
+  text-decoration: underline;
+}
+
+/* Button styles */
+.auth-button {
+  background: linear-gradient(to right, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 1.5rem;
+}
+
+.auth-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Toggle link */
+.auth-toggle {
+  text-align: center;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.auth-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .auth-form-container {
+    margin: 10px;
+  }
+  
+  .sign-in, .sign-up {
+    padding: 1.5rem;
+  }
+  
+  .name-fields {
+    flex-direction: column;
+    gap: 0;
+  }
+}
