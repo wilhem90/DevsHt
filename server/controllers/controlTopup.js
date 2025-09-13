@@ -30,7 +30,7 @@ function generatePriceTiers(
   return tiers;
 }
 
-const PRICE_TIERS = generatePriceTiers(0, 150, 10, 0.25, 0.1);
+const PRICE_TIERS = generatePriceTiers(0, 150, 10, 0.23, 0.08);
 
 function getPercent(value, tiers = PRICE_TIERS) {
   const tier = tiers.find((t) => value >= t.min && value <= t.max);
@@ -112,22 +112,35 @@ const controlTopUp = {
       if (data_products.ResultCode !== 1)
         throw new Error("Failed to fetch operators");
 
-      const availableValues = data_products.Items.reduce((acc, item) => {
-        acc[item.SkuCode] = {
-          ...item,
-          Minimum: {
-            ...item.Minimum,
-            SendValue: calculatePrice(item.Minimum.SendValue),
-          },
-          Maximum: {
-            ...item.Maximum,
-            SendValue: calculatePrice(item.Maximum.SendValue),
-          },
-        };
-        return acc;
-      }, {});
+      const availableValues = {};
 
-      res.status(200).json({ success: true, data: availableValues });
+      data_products.Items.forEach((product) => {
+        if (product.Maximum.SendValue === product.Minimum.SendValue) {
+          availableValues[ProviderCodes] = {
+            ...availableValues[ProviderCodes],
+            [product.LocalizationKey]: {
+              skuCode: product.SkuCode,
+              sendValue: calculatePrice(product.Minimum.SendValue),
+            },
+          };
+        } else if (product.Maximum.SendValue > product.Minimum.SendValue) {
+          const minValue =
+            calculatePrice(product.Minimum.SendValue) < 10
+              ? 10
+              : calculatePrice(product.Minimum.SendValue);
+          const maxValue = calculatePrice(product.Maximum.SendValue);
+          availableValues[ProviderCodes] = {
+            ...availableValues[ProviderCodes],
+            [product.LocalizationKey]: {
+              skuCode: product.SkuCode,
+              minValue,
+              maxValue,
+            },
+          };
+        }
+      });
+
+      res.status(200).json({ success: true, Items: availableValues });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
@@ -137,7 +150,7 @@ const controlTopUp = {
   SendTransfer: async (req, res) => {
     try {
       // Verificamos se o device ative para realizar recarga
-      if (req.body.sendValue > 250) {
+      if (req.body.sendValue > 250 || req.body.sendValue < 10) {
         console.log("Não pode enviar esse valor");
         return res.status(400).json({
           success: false,
@@ -209,22 +222,26 @@ const controlTopUp = {
       }
 
       // Enviar email
-      await sendEmail.invoiceTopUp(
-        req.user.emailUser,
-        req.user.firstNameUser,
-        sendValue,
-        refTopUp.data.amountReceived,
-        dataValids.operatorName,
-        dataValids.accountNumber,
-        dataValids.countryName,
-        refTopUp.data.statusTransaction,
-        new Date(),
-        refTopUp.data.transferId || dataValids.accountNumber
-      );
+      if (dataValids.validateOnly === true) {
+        await sendEmail.invoiceTopUp(
+          req.user.emailUser,
+          req.user.firstNameUser,
+          sendValue,
+          refTopUp.data.amountReceived,
+          dataValids.operatorName,
+          dataValids.accountNumber,
+          dataValids.countryName,
+          refTopUp.data.statusTransaction,
+          new Date(),
+          refTopUp.data.transferId || dataValids.accountNumber,
+          dataValids.sendCurrencyIso,
+          dataValids.receiveCurrencyIso
+        );
+      }
 
       return res.status(200).json({
         success: true,
-        message: "Transação processada com sucesso.",
+        message: refTopUp.message,
         data: {
           ...refTopUp.data,
           transferId: refTopUp.data.transferId || dataValids.accountNumber,

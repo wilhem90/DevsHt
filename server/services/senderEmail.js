@@ -142,7 +142,9 @@ const sendEmail = {
     countryName,
     statusTransaction,
     date,
-    transactionId
+    transactionId,
+    sendCurrencyIso,
+    receiveCurrencyIso
   ) => {
     connectAndSendEmail(
       emailUser,
@@ -156,10 +158,6 @@ const sendEmail = {
       <p style="margin: 5px 0; color: #7f8c8d;">Comprovante de Transação ✅</p>
     </div>
 
-    <!-- Saudação -->
-    <p style="text-transform: capitalize; font-size: 16px;">Olá <strong>${
-      name || "Cliente"
-    }</strong>,</p>
     <p style="font-size: 15px;">Segue abaixo o comprovante da sua recarga realizada com sucesso:</p>
 
     <!-- Detalhes da Transação -->
@@ -188,13 +186,13 @@ const sendEmail = {
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #ddd;"><strong>Valor da Recarga</strong></td>
-        <td style="padding: 12px; border: 1px solid #ddd;"><strong>$ ${formatCurrency(
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>${sendCurrencyIso} ${formatCurrency(
           amount
         )}</strong></td>
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #ddd;"><strong>Valor Recebido</strong></td>
-        <td style="padding: 12px; border: 1px solid #ddd;"><strong>$ ${amountReceived}</strong></td>
+        <td style="padding: 12px; border: 1px solid #ddd;"><strong>${receiveCurrencyIso} ${amountReceived}</strong></td>
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #ddd;"><strong>Data e Hora</strong></td>

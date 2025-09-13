@@ -1,42 +1,97 @@
 import { useEffect, useState } from "react";
-import "./Sidebar.css";
-import { Link } from "react-router-dom";
 import {
   ArrowDownLeft,
   ArrowRightLeft,
   ArrowUpRight,
-  BadgeDollarSignIcon,
   Bell,
   ChevronDown,
+  CircleDollarSignIcon,
   CircleUser,
   Dices,
   Home,
-  Users,
+  Plus,
+  Smartphone,
 } from "lucide-react";
+
+import "./Sidebar.css";
+import { NavLink } from "react-router-dom";
+
 export default function Sidebar() {
   const [urlAvatar, setUrlAvatar] = useState(null);
-  const [emailUser, setEmailUser] = useState(null)
+  const [emailUser, setEmailUser] = useState(null);
+  const [openMenus, setOpenMenus] = useState({}); // controla quais menus estão abertos
 
   useEffect(() => {
     function loadUser() {
       const user = JSON.parse(localStorage.getItem("user"));
       if (user?.avatar) {
         setUrlAvatar(user.avatar);
-        setEmailUser(user.emailUser)
+        setEmailUser(user.emailUser);
       }
     }
 
     loadUser();
-
     window.addEventListener("storage", loadUser);
     return () => window.removeEventListener("storage", loadUser);
   }, []);
 
-  console.log(urlAvatar);
+  const navLinkActive = ({ isActive }) =>
+    isActive ? "active" : "inactive";
+
+  const toggleMenu = (menuName) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [menuName]: !prev[menuName],
+    }));
+  };
+
+  const links = [
+    {
+      textContent: "Home",
+      pathName: "/home",
+      svgName: <Home />,
+    },
+    {
+      textContent: "Transactions",
+      pathName: "/transactions",
+      svgName: <ArrowRightLeft />,
+    },
+    {
+      textContent: "Send",
+      svgName: <ArrowUpRight />,
+      subLinks: [
+        {
+          textContent: "TopUp",
+          pathName: "/send-topup",
+          svgName: <Smartphone />,
+        },
+        {
+          textContent: "Money",
+          pathName: "/send-money",
+          svgName: <CircleDollarSignIcon />,
+        },
+      ],
+    },
+    {
+      textContent: "Create Ticket",
+      pathName: "/create-ticket",
+      svgName: <Dices />,
+    },
+    {
+      textContent: "Add Money",
+      pathName: "/add-money",
+      svgName: <Plus />,
+    },
+    {
+      textContent: "Request",
+      pathName: "/request",
+      svgName: <ArrowDownLeft />,
+    },
+  ];
 
   return (
-    <div className="sidbar">
-      {/* Box Profil User */}
+    <div className="sidebar">
+      {/* Box Perfil */}
       <div className="box-perfil">
         <div className="svg-notification">
           <Bell />
@@ -63,75 +118,42 @@ export default function Sidebar() {
       {/* Links */}
       <div className="box-links">
         <ul>
-          <li>
-            <Link className="btn-home active">
-              <Home />
-              <span>Home</span>
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <ArrowRightLeft />
-              <span>Transactions</span>
-              <ChevronDown className="btn-chevron" />
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <ArrowUpRight />
-              <span>Send</span>
-              <ChevronDown className="btn-chevron" />
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <Dices />
-              <span>Bet</span>
-              <ChevronDown className="btn-chevron" />
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <BadgeDollarSignIcon />
-              <span>Add Money</span>
-              <ChevronDown className="btn-chevron" />
-            </Link>
-          </li>
+          {links.map((link) => (
+            <li key={link.textContent}>
+              {link.subLinks ? (
+                <>
+                  <button
+                    className={`menu-btn ${openMenus[link.textContent] ? "open" : ""}`}
+                    onClick={() => toggleMenu(link.textContent)}
+                  >
+                    {link.svgName}
+                    <span>{link.textContent}</span>
+                    <ChevronDown
+                      className={`btn-chevron ${openMenus[link.textContent] ? "rotate" : ""}`}
+                    />
+                  </button>
 
-          <li>
-            <Link>
-              <ArrowDownLeft />
-              <span>Request</span>
-              <ChevronDown className="btn-chevron" />
-            </Link>
-          </li>
-        </ul>
-
-        <ul>
-          <li>
-            <Link className="active">
-              <Users />
-              <span>Recipients</span>
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <CircleUser />
-              <span>Gael Charles</span>
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <CircleUser />
-              <span>Wilhem Wundt Maxime</span>
-            </Link>
-          </li>
-          <li>
-            <Link>
-              <CircleUser />
-              <span>Bernard Pelegrine</span>
-            </Link>
-          </li>
+                  {openMenus[link.textContent] && (
+                    <ul className="submenu">
+                      {link.subLinks.map((sublink) => (
+                        <li key={sublink.textContent}>
+                          <NavLink to={sublink.pathName} className={navLinkActive}>
+                            {sublink.svgName}
+                            <span>{sublink.textContent}</span>
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <NavLink to={link.pathName} className={navLinkActive}>
+                  {link.svgName}
+                  <span>{link.textContent}</span>
+                </NavLink>
+              )}
+            </li>
+          ))}
         </ul>
       </div>
     </div>

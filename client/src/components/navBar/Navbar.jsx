@@ -1,10 +1,10 @@
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  CircleDollarSign,
   Dices,
   EyeIcon,
   EyeOff,
+  Plus,
 } from "lucide-react";
 import "./Navbar.css";
 import useAuth from "../../Authentication/UseAuth.js";
@@ -39,7 +39,7 @@ export default function Navbar() {
           <span>Bet</span>
         </button>
         <button>
-          <CircleDollarSign />
+          <Plus />
           <span>Add</span>
         </button>
         <button>

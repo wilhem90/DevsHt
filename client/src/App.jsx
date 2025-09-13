@@ -6,6 +6,8 @@ import Profile from "./pages/profil/Profile.jsx";
 import About from "./pages/about/About.jsx";
 import PrivateRoute from "./Authentication/PrivateRoute.jsx";
 import useAuth from "./Authentication/UseAuth.js";
+import TopUp from "./pages/topup/TopUp.jsx";
+import Money from "./pages/money/Money.jsx";
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -39,6 +41,22 @@ function AppRoutes() {
         element={
           <PrivateRoute>
             <About />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/send-topup"
+        element={
+          <PrivateRoute>
+            <TopUp />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/send-money"
+        element={
+          <PrivateRoute>
+            <Money />
           </PrivateRoute>
         }
       />

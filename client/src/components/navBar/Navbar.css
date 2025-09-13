@@ -5,7 +5,7 @@ header {
   position: sticky;
   width: calc(100% - 300px);
   padding: 2px 15px;
-  height: 120px;
+  height: 110px;
   align-items: center;
   border-bottom: 1px solid #ccc;
   justify-content: space-between;
@@ -18,14 +18,14 @@ header {
 header .box-left {
   display: flex;
   flex-direction: column;
-  background-color: var(--lightprimary);
+  background-color: var(--lightsegundary);
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
 }
 
 header .box-left:hover {
-  background-color: var(--lightsegundary);
+  background-color: var(--lightPrimary);
 }
 
 header .box-left .amount-solde {
@@ -57,7 +57,7 @@ header .box-right {
 
 header .box-right button {
   margin: 0 10px;
-  padding: 8px 20px;
+  padding: 7px 20px;
   display: flex;
   align-items: center;
   background-color: var(--blueSegundary);
@@ -76,5 +76,5 @@ header .box-right button svg {
 }
 
 header .box-right button span {
-  font-size: 1.1rem;
+  font-size: 1rem;
 }

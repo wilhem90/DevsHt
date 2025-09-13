@@ -13,48 +13,59 @@ const modelTopUp = {
       let newSolde;
       let lastSolde;
 
+      // 🔹 Primeiro: se for operação real, desconta saldo de forma transacional
+      if (dataTopup.validateOnly === false) {
+        await connection_db.runTransaction(async (t) => {
+          const userSnap = await t.get(refUser);
+          if (!userSnap.exists) throw new Error("Usuário não encontrado!");
 
-      // 🔹 Primeiro: desconta saldo de forma transacional
-      await connection_db.runTransaction(async (t) => {
-        const userSnap = await t.get(refUser);
-        if (!userSnap.exists) throw new Error("Usuário não encontrado!");
+          lastSolde = userSnap.data().soldeAccount || 0;
+          if (lastSolde < dataTopup.sendValue) {
+            throw new Error("Saldo insuficiente!");
+          }
 
-        lastSolde = userSnap.data().soldeAccount || 0;
-        if (lastSolde < dataTopup.sendValue) {
-          throw new Error("Saldo insuficiente!");
-        }
+          newSolde = lastSolde - dataTopup.sendValue;
 
-        newSolde = lastSolde - dataTopup.sendValue;
+          // Cria transação pendente
+          t.set(refCashOut, {
+            ...dataTopup,
+            productName: "topup",
+            createdAt: Timestamp.fromDate(new Date()),
+            updatedAt: Timestamp.fromDate(new Date()),
+            statusTransaction: "pending",
+            createdBy: userData.emailUser,
+            typeTransaction: "cash-out",
+            lastSolde,
+            newSolde,
+          });
 
-        // Cria transação pendente
-        t.set(refCashOut, {
-          ...dataTopup,
-          productName: "topup",
-          createdAt: Timestamp.fromDate(new Date()),
-          updatedAt: Timestamp.fromDate(new Date()),
-          statusTransaction: "pending",
-          createdBy: userData.emailUser,
-          typeTransaction: "cash-out",
-          lastSolde,
-          newSolde,
+          // Atualiza saldo do usuário
+          t.update(refUser, { soldeAccount: newSolde });
         });
-
-        // Atualiza saldo do usuário
-        t.update(refUser, { soldeAccount: newSolde });
-      });
+      }
 
       // 🔹 Segundo: chama API externa (Ding)
-      const responseDing = await requestDing("SendTransfer", "POST", {
-        SkuCode: dataTopup.skuCode,
-        SendValue: dataTopup.sendValueWithTax,
-        SendCurrencyIso: dataTopup.sendCurrencyIso,
-        AccountNumber: dataTopup.accountNumber,
-        DistributorRef: dataTopup.distributorRef,
-        ValidateOnly: dataTopup.validateOnly,
-      });
+      let responseDing;
+      try {
+        responseDing = await requestDing("SendTransfer", "POST", {
+          SkuCode: dataTopup.skuCode,
+          SendValue: dataTopup.sendValueWithTax,
+          SendCurrencyIso: dataTopup.sendCurrencyIso,
+          AccountNumber: dataTopup.accountNumber,
+          DistributorRef: dataTopup.distributorRef,
+          ValidateOnly: dataTopup.validateOnly,
+        });
+      } catch (err) {
+        responseDing = { success: false, error: err.message };
+      }
 
-      if (!responseDing.success) {
-        // 🔹 Se Ding falhar → rollback (saldo + transação de reembolso)
+      // 🔹 Verificação robusta do resultado
+      const dingOk =
+        responseDing.success &&
+        responseDing?.TransferRecord?.ProcessingState === "SUCCESS";
+
+      // Caso real e Ding falhou → rollback
+      if (!dingOk && dataTopup.validateOnly === false) {
         await connection_db.runTransaction(async (t) => {
           t.update(refUser, { soldeAccount: newSolde + dataTopup.sendValue });
 
@@ -62,9 +73,10 @@ const modelTopUp = {
           t.update(refCashOut, {
             statusTransaction: "failed",
             updatedAt: Timestamp.fromDate(new Date()),
+            errorMessage: responseDing.error || "Ding rejected transaction",
           });
 
-          // cria transação de reembolso
+          // opcional: cria transação de reembolso
           t.set(refRefund, {
             productName: "refund-topup",
             statusTransaction: "completed",
@@ -85,27 +97,37 @@ const modelTopUp = {
         };
       }
 
-      // 🔹 Se Ding OK → confirmar a transação
-      await refCashOut.update({
-        statusTransaction: "completed",
-        transferRef:
-          responseDing?.TransferRecord?.TransferId?.TransferRef || null,
-        receiveValue: responseDing?.TransferRecord?.Price?.ReceiveValue || null,
-        updatedAt: Timestamp.fromDate(new Date()),
-      });
+      // Caso real e Ding OK → confirmar transação
+      if (dataTopup.validateOnly === false) {
+        await refCashOut.update({
+          statusTransaction: "completed",
+          transferRef:
+            responseDing?.TransferRecord?.TransferId?.TransferRef || null,
+          receiveValue:
+            responseDing?.TransferRecord?.Price?.ReceiveValue || null,
+          updatedAt: Timestamp.fromDate(new Date()),
+        });
+      }
 
+      // 🔹 Retorno final
       return {
         success: true,
-        message: "Transação concluída com sucesso!",
+        message:
+          dataTopup.validateOnly === false
+            ? "Transaction completed successfully!"
+            : "Estimated value!",
         data: {
-         transferId: refCashOut.id,
-          idTopup: responseDing?.TransferRecord?.TransferId?.TransferId || dataTopup.DistributorRef,
+          transferId: dataTopup.validateOnly === false ? refCashOut.id : null,
+          idTopup:
+            responseDing?.TransferRecord?.TransferId?.TransferId ||
+            dataTopup.distributorRef,
           amountReceived: responseDing?.TransferRecord?.Price?.ReceiveValue,
-          receiveCurrencyIso: responseDing?.TransferRecord?.Price?.ReceiveCurrencyIso,
+          receiveCurrencyIso:
+            responseDing?.TransferRecord?.Price?.ReceiveCurrencyIso,
           statusTransaction: responseDing?.TransferRecord?.ProcessingState,
-          lastSolde,
-          newSolde,
-        }
+          lastSolde: dataTopup.validateOnly === false ? lastSolde : null,
+          newSolde: dataTopup.validateOnly === false ? newSolde : null,
+        },
       };
     } catch (error) {
       console.error("Erro em createTopUp:", error);
