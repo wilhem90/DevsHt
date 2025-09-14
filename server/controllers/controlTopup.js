@@ -255,6 +255,15 @@ const controlTopUp = {
       });
     }
   },
+
+  GetTopups: async(req, res) => {
+    const { startDate, endDAte } = req.query
+    return res.status(200).json({
+      message: "Recebemos a sua solicitação!",
+      startDate,
+      endDAte
+    })
+  },
 };
 
 module.exports = controlTopUp;
