@@ -1,6 +1,7 @@
 import { Search, SlidersHorizontal } from "lucide-react";
 import Navbar from "../../components/navBar/Navbar";
 import Sidebar from "../../components/sideBar/Sidebar";
+import Transactions from "../../components/transactions/Transactions";
 import "./Home.css";
 export default function Home() {
   return (
@@ -27,6 +28,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+          <Transactions />
       </div>
     </div>
   );

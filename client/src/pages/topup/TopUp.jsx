@@ -1,6 +1,6 @@
 import useAuth from "../../Authentication/UseAuth";
 import Invoice from "../../components/invoice/Invoice";
-import Load from "../../components/loading/load";
+import Load from "../../components/loading/Load";
 import Navbar from "../../components/navBar/Navbar";
 import Sidebar from "../../components/sideBar/Sidebar";
 import RequestApi from "../../services/RequestApi";
@@ -196,7 +196,7 @@ export default function TopUp() {
       receiveCurrencyIso: countryIso,
       accountNumber: state.inputNumber,
       transactionType: "topup",
-      validateOnly: Boolean(false),
+      validateOnly: Boolean(true),
     };
 
     dispatch({
@@ -250,7 +250,7 @@ export default function TopUp() {
         receiveCurrencyIso: countryIso,
         accountNumber: state.inputNumber,
         transactionType: "topup",
-        validateOnly: true,
+        validateOnly: Boolean(true),
       };
       setLoad(true);
       const response = await RequestApi(

@@ -4,6 +4,7 @@ import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { MdOutlineEmail } from "react-icons/md";
 import { RiLockPasswordLine } from "react-icons/ri";
 import { HiOutlinePhone } from "react-icons/hi2";
+import Load from "../../components/loading/Load.jsx";
 
 import "./AuthenticUser.css";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +12,8 @@ import { useNavigate } from "react-router-dom";
 export default function AuthenticUser() {
   const [showPassWord, setShowPassword] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const initialState = {
     emailUser: "",
@@ -27,7 +29,9 @@ export default function AuthenticUser() {
   };
 
   function reducer(state, action) {
-    return action.type === "UPDATE_FIELD" ? { ...state, [action.field]: action.value } : state;
+    return action.type === "UPDATE_FIELD"
+      ? { ...state, [action.field]: action.value }
+      : state;
   }
 
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -35,13 +39,20 @@ export default function AuthenticUser() {
 
   async function handleLogin(e) {
     e.preventDefault();
-    await login({
-      emailUser: state.emailUser,
-      passwordUser: state.passwordUser,
-      expireAt: state.expireAt
-    });
+    try {
+      setLoading(true);
+      await login({
+        emailUser: state.emailUser,
+        passwordUser: state.passwordUser,
+        expireAt: state.expireAt,
+      });
 
-    navigate("/home")
+      navigate("/home")
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleShowPassword() {
@@ -244,6 +255,7 @@ export default function AuthenticUser() {
           </span>
         </form>
       </div>
+      {loading && <Load />}
     </div>
   );
 }
