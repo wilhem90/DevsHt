@@ -2,9 +2,13 @@ import RequestApi from "../../services/RequestApi";
 import "./Transactions.css";
 export default function Transactions() {
 
-  async function handeGetData() {
+  async function handleGetData() {
     const data = await RequestApi()
+    console.log(data)
   }
+
+  handleGetData()
+
   return (
     <div className="box-transactions">
       <p>
