@@ -26,9 +26,8 @@ export default async function RequestApi(endpoint, method, data, user) {
 
     try {
         const response = await fetch(url, options);
-
         if (!response.ok) {
-            if (response.message.includes("Token expired!")) {
+            if (response?.message?.includes("Token expired!")) {
                 window.location.reload(true)
                 localStorage.clear()
             }
@@ -39,7 +38,7 @@ export default async function RequestApi(endpoint, method, data, user) {
         return await response.json();
     } catch (error) {
         console.error("Erro na requisição:", error.message);
-        if (error.message.includes("Token expired!")) {
+        if (error?.message.includes("Token expired!")) {
                 window.location.reload()
                 localStorage.clear()
             }

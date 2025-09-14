@@ -5,9 +5,12 @@ import Navbar from "../../components/navBar/Navbar";
 import Sidebar from "../../components/sideBar/Sidebar";
 import RequestApi from "../../services/RequestApi";
 import "./TopUp.css";
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 
 export default function TopUp() {
+  useEffect(() => {
+      document.title = "TopUp";
+    }, []);
   const { user } = useAuth();
 
   const initialState = {
