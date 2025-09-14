@@ -5,9 +5,6 @@ import Transactions from "../../components/transactions/Transactions";
 import "./Home.css";
 import { useEffect } from "react";
 export default function Home() {
-  useEffect(() => {
-    document.title = "Home";
-  }, []);
   return (
     <div className="container-home">
       <Sidebar />
