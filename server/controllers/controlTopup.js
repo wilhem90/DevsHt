@@ -255,6 +255,12 @@ const controlTopUp = {
       });
     }
   },
+
+  GetTopups: async(req, res) => {
+    return res.status(200).json({
+      message: "Vamos trabalhar para melhor o sistema!"
+    })
+  }
 };
 
 module.exports = controlTopUp;
