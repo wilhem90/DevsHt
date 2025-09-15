@@ -21,12 +21,16 @@ export default async function RequestApi(endpoint, method, data, user) {
     } else if (data && Object.keys(data).length > 0) {
         const queryParams = new URLSearchParams(data).toString();
         url += `?${queryParams}`;
+        
     }
 
     try {
         const response = await fetch(url, options);
-
         if (!response.ok) {
+            if (response?.message?.includes("Token expired!")) {
+                window.location.reload(true)
+                localStorage.clear()
+            }
             const errorText = await response.text();
             throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
         }
@@ -34,6 +38,10 @@ export default async function RequestApi(endpoint, method, data, user) {
         return await response.json();
     } catch (error) {
         console.error("Erro na requisição:", error.message);
+        if (error?.message.includes("Token expired!")) {
+                window.location.reload()
+                localStorage.clear()
+            }
         throw error;
     }
 }

@@ -1,8 +1,13 @@
 import { Search, SlidersHorizontal } from "lucide-react";
 import Navbar from "../../components/navBar/Navbar";
 import Sidebar from "../../components/sideBar/Sidebar";
+import Transactions from "../../components/transactions/Transactions";
 import "./Home.css";
+import { useEffect } from "react";
 export default function Home() {
+  useEffect(() => {
+    document.title = "Home"
+  }, [])  
   return (
     <div className="container-home">
       <Sidebar />
@@ -27,6 +32,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+          <Transactions />
       </div>
     </div>
   );

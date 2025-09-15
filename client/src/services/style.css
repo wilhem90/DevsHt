@@ -1,0 +1,24 @@
+* {
+    padding: 0;
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    box-sizing: border-box;
+}
+
+.fullName {
+    padding: 10px;
+    border: 1px solid red;
+    width: 300px;
+    margin: auto;
+}
+
+.fullName::before {
+    content: "";
+    border: 1px solid blue;
+    padding: 15px;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-top-right-radius: 50%;
+}
